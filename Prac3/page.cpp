@@ -16,6 +16,16 @@ Page::~Page()
     // Destructor logic if needed
 }
 
+void Page::resetSelected()
+{
+    for (int i = 0; i < CITY_COUNT; ++i)
+    {
+        citySelected[i] = false;
+    }
+
+    citySelected[Johannesburg] = true;
+}
+
 std::time_t Page::getCityTime(Cities city) const
 {
     std::time_t now = std::time(NULL);
