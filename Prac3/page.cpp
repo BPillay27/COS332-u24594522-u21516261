@@ -102,6 +102,17 @@ std::string Page::generatePage()
     html += "<html><head>";
     html += "<meta http-equiv=\"refresh\" content=\"1\">";
     html += "<title>World Clock</title>";
+
+    html += "<style>";
+    html += "body { font-family: Arial, sans-serif; text-align: center; background:#f5f5f5; }";
+    html += "h1 { margin-top: 30px; }";
+    html += "table { margin: auto; border-collapse: collapse; }";
+    html += "td { padding: 15px 40px; font-size: 18px; }";
+    html += "a { text-decoration: none; color: #0066cc; font-weight: bold; }";
+    html += "a:hover { text-decoration: underline; }";
+    html += "button { padding:10px 20px; font-size:16px; margin-top:20px; cursor:pointer; }";
+    html += "</style>";
+
     html += "</head><body>";
 
     html += "<h1>World Clock</h1>";
@@ -111,15 +122,12 @@ std::string Page::generatePage()
     {
         html += "<tr>";
 
-        // First column
         html += "<td>";
 
-        // Link start
         html += "<a href=\"/?city=";
-        html += char('0' + i); // C++98-safe for 0..5
+        html += char('0' + i);
         html += "\">";
 
-        // City name
         switch (i)
         {
         case Johannesburg:
@@ -142,10 +150,8 @@ std::string Page::generatePage()
             break;
         }
 
-        // Link end
         html += "</a>";
 
-        // Time only if selected
         if (citySelected[i])
         {
             html += " : ";
@@ -154,7 +160,6 @@ std::string Page::generatePage()
 
         html += "</td>";
 
-        // If this city is selected, try pair with next selected
         if (citySelected[i])
         {
             int next = -1;
@@ -172,7 +177,6 @@ std::string Page::generatePage()
             {
                 html += "<td>";
 
-                // Link start for NEXT
                 html += "<a href=\"/?city=";
                 html += char('0' + next);
                 html += "\">";
@@ -201,13 +205,12 @@ std::string Page::generatePage()
 
                 html += "</a>";
 
-                // next is selected, so show its time
                 html += " : ";
                 html += convertTimeToString(getCityTime((Cities)next));
 
                 html += "</td>";
 
-                i = next; // skip the paired city
+                i = next;
             }
         }
 
@@ -215,6 +218,7 @@ std::string Page::generatePage()
     }
 
     html += "</table>";
+    html += "<br><button>Reset</button>";
     html += "</body></html>";
 
     return html;
