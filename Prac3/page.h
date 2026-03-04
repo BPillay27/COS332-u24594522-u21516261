@@ -25,7 +25,7 @@ public:
     std::string convertTimeToString(std::time_t time) const;
     bool selectCity(Cities city);
     bool deselectCity(Cities city);
-
+    void resetSelected();
 private:
     bool citySelected[CITY_COUNT];
 };
