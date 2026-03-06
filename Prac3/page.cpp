@@ -9,6 +9,17 @@ Page::Page()
     }
 
     citySelected[Johannesburg] = true; // Johannesburg is selected by default
+
+    html = "<!DOCTYPE html>"
+           "<html>"
+           "<head>"
+           "<meta charset=\"UTF-8\">"
+           "<meta http-equiv=\"refresh\" content=\"1\">"
+           "<title>World Clock</title>"
+           "</head>"
+           "<body>";
+
+    html += "</body></html>";
 }
 
 Page::~Page()
@@ -105,70 +116,87 @@ bool Page::deselectCity(Cities city)
     }
 }
 
-std::string Page::generatePage()
+std::string Page::generateGeneric()
 {
-    std::string html;
+    std::string page;
 
-    html += "<html><head>";
-    html += "<meta http-equiv=\"refresh\" content=\"1\">";
-    html += "<title>World Clock</title>";
+    page += "<!DOCTYPE html>";
+    page += "<html><head>";
+    page += "<meta charset=\"UTF-8\">";
+    page += "<meta http-equiv=\"refresh\" content=\"1\">";
+    page += "<title>World Clock</title>";
 
-    html += "<style>";
-    html += "body { font-family: Arial, sans-serif; text-align: center; background:#f5f5f5; }";
-    html += "h1 { margin-top: 30px; }";
-    html += "table { margin: auto; border-collapse: collapse; }";
-    html += "td { padding: 15px 40px; font-size: 18px; }";
-    html += "a { text-decoration: none; color: #0066cc; font-weight: bold; }";
-    html += "a:hover { text-decoration: underline; }";
-    html += "button { padding:10px 20px; font-size:16px; margin-top:20px; cursor:pointer; }";
-    html += "</style>";
+    page += "<style>";
+    page += "body { font-family: Arial, sans-serif; text-align: center; background: #f5f5f5; }";
+    page += "h1 { margin-top: 30px; }";
+    page += "table { margin: auto; border-collapse: collapse; }";
+    page += "td { padding: 15px 40px; font-size: 18px; }";
+    page += "a.city { text-decoration: none; color: #0066cc; font-weight: bold; }";
+    page += "a.city:hover { text-decoration: underline; }";
+    page += "a.reset { display: inline-block; padding: 10px 20px; font-size: 16px; ";
+    page += "background: #e0e0e0; color: black; text-decoration: none; border: 1px solid #999; ";
+    page += "border-radius: 4px; margin-top: 20px; }";
+    page += "a.reset:hover { background: #d0d0d0; }";
+    page += "</style>";
 
-    html += "</head><body>";
+    page += "</head><body>";
 
-    html += "<h1>World Clock</h1>";
-    html += "<table>";
+    page += "<h1>World Clock</h1>";
+    page += "<table>";
 
     for (int i = 0; i < CITY_COUNT; i++)
     {
-        html += "<tr>";
+        page += "<tr>";
+        page += "<td>";
 
-        html += "<td>";
-
-        html += "<a href=\"/?city=";
-        html += char('0' + i);
-        html += "\">";
+        std::string cityName;
+        std::string displayName;
 
         switch (i)
         {
         case Johannesburg:
-            html += "Johannesburg";
+            cityName = "Johannesburg";
+            displayName = "Johannesburg";
             break;
         case NewYork:
-            html += "New York";
+            cityName = "NewYork";
+            displayName = "New York";
             break;
         case London:
-            html += "London";
+            cityName = "London";
+            displayName = "London";
             break;
         case Tokyo:
-            html += "Tokyo";
+            cityName = "Tokyo";
+            displayName = "Tokyo";
             break;
         case Frankfurt:
-            html += "Frankfurt";
+            cityName = "Frankfurt";
+            displayName = "Frankfurt";
             break;
         case Sydney:
-            html += "Sydney";
+            cityName = "Sydney";
+            displayName = "Sydney";
             break;
         }
 
-        html += "</a>";
+        page += "<a class=\"city\" href=\"/";
+        if (citySelected[i])
+            page += "Deselect/";
+        else
+            page += "Select/";
+        page += cityName;
+        page += "\">";
+        page += displayName;
+        page += "</a>";
 
         if (citySelected[i])
         {
-            html += " : ";
-            html += convertTimeToString(getCityTime((Cities)i));
+            page += " : ";
+            page += convertTimeToString(getCityTime((Cities)i));
         }
 
-        html += "</td>";
+        page += "</td>";
 
         if (citySelected[i])
         {
@@ -185,51 +213,91 @@ std::string Page::generatePage()
 
             if (next != -1)
             {
-                html += "<td>";
+                page += "<td>";
 
-                html += "<a href=\"/?city=";
-                html += char('0' + next);
-                html += "\">";
+                std::string nextCityName;
+                std::string nextDisplayName;
 
                 switch (next)
                 {
                 case Johannesburg:
-                    html += "Johannesburg";
+                    nextCityName = "Johannesburg";
+                    nextDisplayName = "Johannesburg";
                     break;
                 case NewYork:
-                    html += "New York";
+                    nextCityName = "NewYork";
+                    nextDisplayName = "New York";
                     break;
                 case London:
-                    html += "London";
+                    nextCityName = "London";
+                    nextDisplayName = "London";
                     break;
                 case Tokyo:
-                    html += "Tokyo";
+                    nextCityName = "Tokyo";
+                    nextDisplayName = "Tokyo";
                     break;
                 case Frankfurt:
-                    html += "Frankfurt";
+                    nextCityName = "Frankfurt";
+                    nextDisplayName = "Frankfurt";
                     break;
                 case Sydney:
-                    html += "Sydney";
+                    nextCityName = "Sydney";
+                    nextDisplayName = "Sydney";
                     break;
                 }
 
-                html += "</a>";
+                page += "<a class=\"city\" href=\"/Deselect/";
+                page += nextCityName;
+                page += "\">";
+                page += nextDisplayName;
+                page += "</a>";
 
-                html += " : ";
-                html += convertTimeToString(getCityTime((Cities)next));
+                page += " : ";
+                page += convertTimeToString(getCityTime((Cities)next));
 
-                html += "</td>";
+                page += "</td>";
 
                 i = next;
             }
         }
 
-        html += "</tr>";
+        page += "</tr>";
     }
 
-    html += "</table>";
-    html += "<br><button>Reset</button>";
-    html += "</body></html>";
+    page += "</table>";
+    page += "<br><a class=\"reset\" href=\"/Reset\">Reset</a>";
+    page += "</body></html>";
 
+    return page;
+}
+
+std::string Page::appendHTML(const std::string &content)
+{
+    size_t pos = html.rfind("</body></html>");
+    if (pos != std::string::npos)
+    {
+        html.erase(pos);
+    }
+
+    html += content;
+    html += "</body></html>";
+}
+
+void Page::clearPage()
+{
+    html = "<!DOCTYPE html>"
+           "<html>"
+           "<head>"
+           "<meta charset=\"UTF-8\">"
+           "<meta http-equiv=\"refresh\" content=\"1\">"
+           "<title>World Clock</title>"
+           "</head>"
+           "<body>";
+
+    html += "</body></html>";
+}
+
+std::string Page::getHTML()
+{
     return html;
 }
