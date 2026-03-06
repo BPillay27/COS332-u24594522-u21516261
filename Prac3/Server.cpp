@@ -108,9 +108,10 @@ std::string Server::process_request(const std::string& request) {
             else if(cityName == "Tokyo")        page.selectCity(Tokyo);
             else if(cityName == "Frankfurt")    page.selectCity(Frankfurt);
             else if(cityName == "Sydney")       page.selectCity(Sydney);
+            else if(cityName=="Johannesburg");
             else {
                 page.generateGeneric();
-                page.appendHTML("<p>"+cityName+" is not a valid city on the lsit.</p>");
+                page.appendHTML("<p>"+cityName+" is not a valid city on the list.</p>");
                 response = "HTTP/1.1 404 Not Found\r\nContent-Type: text/html\r\nContent-Length: " + std::to_string(page.getHTML().size()) + "\r\n\r\n" + page.getHTML();
                 return withDate(response);
             }
@@ -123,9 +124,10 @@ std::string Server::process_request(const std::string& request) {
             else if(cityName == "Tokyo")     page.deselectCity(Tokyo);
             else if(cityName == "Frankfurt") page.deselectCity(Frankfurt);
             else if(cityName == "Sydney")    page.deselectCity(Sydney);
+            else if(cityName == "Johannesburg");
             else {
                 page.generateGeneric();
-                page.appendHTML("<p>"+cityName+" is not a valid city on the lsit.</p>");
+                page.appendHTML("<p>"+cityName+" is not a valid city on the list.</p>");
                 response = "HTTP/1.1 404 Not Found\r\nContent-Type: text/html\r\nContent-Length: " + std::to_string(page.getHTML().size()) + "\r\n\r\n" + page.getHTML();
                 return withDate(response);
             }
