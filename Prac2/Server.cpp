@@ -181,7 +181,7 @@ private:
 
             // Normal character
             line += c;
-            // send(socket, &c, 1, 0); // Echo back (remove if client does local echo)
+            send(socket, &c, 1, 0); // Echo back (remove if client does local echo)
         }
 
         return line;
