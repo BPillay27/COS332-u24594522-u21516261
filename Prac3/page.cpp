@@ -146,9 +146,6 @@ std::string Page::generateGeneric()
 
     for (int i = 0; i < CITY_COUNT; i++)
     {
-        page += "<tr>";
-        page += "<td>";
-
         std::string cityName;
         std::string displayName;
 
@@ -178,8 +175,11 @@ std::string Page::generateGeneric()
             cityName = "Sydney";
             displayName = "Sydney";
             break;
+        default:
+            continue;
         }
 
+        page += "<tr><td>";
         page += "<a class=\"city\" href=\"/";
         if (citySelected[i])
             page += "Deselect/";
@@ -196,82 +196,18 @@ std::string Page::generateGeneric()
             page += convertTimeToString(getCityTime((Cities)i));
         }
 
-        page += "</td>";
-
-        if (citySelected[i])
-        {
-            int next = -1;
-
-            for (int j = i + 1; j < CITY_COUNT; j++)
-            {
-                if (citySelected[j])
-                {
-                    next = j;
-                    break;
-                }
-            }
-
-            if (next != -1)
-            {
-                page += "<td>";
-
-                std::string nextCityName;
-                std::string nextDisplayName;
-
-                switch (next)
-                {
-                case Johannesburg:
-                    nextCityName = "Johannesburg";
-                    nextDisplayName = "Johannesburg";
-                    break;
-                case NewYork:
-                    nextCityName = "NewYork";
-                    nextDisplayName = "New York";
-                    break;
-                case London:
-                    nextCityName = "London";
-                    nextDisplayName = "London";
-                    break;
-                case Tokyo:
-                    nextCityName = "Tokyo";
-                    nextDisplayName = "Tokyo";
-                    break;
-                case Frankfurt:
-                    nextCityName = "Frankfurt";
-                    nextDisplayName = "Frankfurt";
-                    break;
-                case Sydney:
-                    nextCityName = "Sydney";
-                    nextDisplayName = "Sydney";
-                    break;
-                }
-
-                page += "<a class=\"city\" href=\"/Deselect/";
-                page += nextCityName;
-                page += "\">";
-                page += nextDisplayName;
-                page += "</a>";
-
-                page += " : ";
-                page += convertTimeToString(getCityTime((Cities)next));
-
-                page += "</td>";
-
-                i = next;
-            }
-        }
-
-        page += "</tr>";
+        page += "</td></tr>";
     }
 
     page += "</table>";
     page += "<br><a class=\"reset\" href=\"/Reset\">Reset</a>";
     page += "</body></html>";
 
+    html = page;
     return page;
 }
 
-std::string Page::appendHTML(const std::string &content)
+void Page::appendHTML(const std::string &content)
 {
     size_t pos = html.rfind("</body></html>");
     if (pos != std::string::npos)

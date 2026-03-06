@@ -20,7 +20,7 @@ public:
     Page();
     ~Page();
     std::string generateGeneric(); // change to make Generic
-    std::string appendHTML(const std::string &content);
+    void appendHTML(const std::string &content);
     void clearPage();
     std::time_t getCurrentTime() const;
     std::time_t getCityTime(Cities city) const;

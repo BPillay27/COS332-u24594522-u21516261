@@ -4,7 +4,7 @@ LDFLAGS =
 
 TARGET = program
 
-SOURCES = main.cpp Server.cpp
+SOURCES = main.cpp Server.cpp page.cpp
 OBJECTS = $(SOURCES:.cpp=.o)
 
 all: $(TARGET)
