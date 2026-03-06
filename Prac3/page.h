@@ -19,7 +19,9 @@ class Page
 public:
     Page();
     ~Page();
-    std::string generatePage();
+    std::string generatePage(); // change to make Generic
+    std::string appendHTML(std::string html);
+    void clearPage();
     std::time_t getCurrentTime() const;
     std::time_t getCityTime(Cities city) const;
     std::string convertTimeToString(std::time_t time) const;
@@ -28,4 +30,5 @@ public:
     void resetSelected();
 private:
     bool citySelected[CITY_COUNT];
+    std::string pageHTML;
 };
