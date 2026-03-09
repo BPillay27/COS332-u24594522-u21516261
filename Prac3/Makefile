@@ -31,3 +31,12 @@ rz:
 
 hash: $(TARGET)
 	md5sum $(TARGET)
+
+testNA:
+	curl -i http://localhost:5555/files/
+
+testA:
+	curl -i -H "Authorization: Bearer Admin" http://localhost:5555/files/
+
+testPost:
+	curl -i -X POST http://localhost:5555/
