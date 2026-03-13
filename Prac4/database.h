@@ -2,6 +2,65 @@
 #include <vector>
 #include <string>
 #include <fstream>
+#include <sstream>
+#include <iterator>
+#include <regex>
+#include <sys/stat.h>
+#include <unistd.h>
+
+static const std::string b64_chars =
+        "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+        "abcdefghijklmnopqrstuvwxyz"
+        "0123456789+/";
+
+//Return the new path of the temp file.
+static inline std::string writeTempFile(const std::string &bytes, const std::string &suffix = "") {
+        char tmpl[] = "/tmp/imgXXXXXX";
+        int fd = mkstemp(tmpl);
+        if (fd == -1) return {};
+        ssize_t w = write(fd, bytes.data(), bytes.size()); (void)w;
+        close(fd);
+        std::string path(tmpl);
+        if (!suffix.empty()) {
+                std::string newPath = path + suffix;
+                rename(path.c_str(), newPath.c_str());
+                path = newPath;
+        }
+        return path;
+}
+
+std::string base64_encode(const std::string &in) {
+        std::string out;
+        int val = 0, valb = -6;
+        for (unsigned char c : in) {
+                val = (val << 8) + c;
+                valb += 8;
+                while (valb >= 0) {
+                        out.push_back(b64_chars[(val >> valb) & 0x3F]);
+                        valb -= 6;
+                }
+        }
+        if (valb > -6) out.push_back(b64_chars[((val << 8) >> (valb + 8)) & 0x3F]);
+        while (out.size() % 4) out.push_back('=');
+        return out;
+}
+
+std::string base64_decode(const std::string &in) {
+        std::string out;
+        std::vector<int> T(256, -1);
+        for (int i = 0; i < 64; ++i) T[(unsigned)b64_chars[i]] = i;
+        int val = 0, valb = -8;
+        for (unsigned char c : in) {
+                if (T[c] == -1) break;
+                val = (val << 6) + T[c];
+                valb += 6;
+                if (valb >= 0) {
+                        out.push_back(char((val >> valb) & 0xFF));
+                        valb -= 8;
+                }
+        }
+        return out;
+}
 
 class Appointment
 {
@@ -11,12 +70,13 @@ private:
     std::string contactee;
     std::string location;    // Should be able to be ignored
     std::string description; // Should be able to be ignored
+    std::string imagePath;    // Should be able to be ignored
 public:
     Appointment(std::string date, std::string time, std::string contactee,
-                std::string location = "", std::string description = "")
+                std::string location = "", std::string description = "", std::string imagePath = "")
         : date(date), time(time), contactee(contactee),
-          location(location), description(description) {}
-    Appointment() : date(""), time(""), contactee(""), location(""), description("") {}
+          location(location), description(description), imagePath(base64_decode(imagePath)) {}
+    Appointment() : date(""), time(""), contactee(""), location(""), description(""), imagePath("") {}
     Appointment(std::string fileString)
     {
         size_t dStart = fileString.find("<D>") + 3;
@@ -38,6 +98,10 @@ public:
         size_t descStart = fileString.find("<DESC>") + 6;
         size_t descEnd = fileString.find("<DESC>", descStart);
         description = fileString.substr(descStart, descEnd - descStart);
+
+        size_t imgStart = fileString.find("<IMG>") + 5;
+        size_t imgEnd = fileString.find("<IMG>", imgStart);
+        imagePath = fileString.substr(imgStart, imgEnd - imgStart);
     }
     ~Appointment() {}
     std::string getDate() const { return date; }
@@ -45,6 +109,15 @@ public:
     std::string getContactee() const { return contactee; }
     std::string getLocation() const { return location; }
     std::string getDescription() const { return description; }
+    std::string getImagePath() const { //this return a HTML img tag using a temp file created from the base64 string stored in imagePath
+        
+        if (imagePath.empty()) return std::string();
+        std::string bytes = base64_decode(imagePath);
+        if (bytes.empty()) return std::string();
+        std::string tmp = writeTempFile(bytes);
+        if (tmp.empty()) return std::string();
+        return std::string("<img src=\"") + tmp + "\" alt=\"image\">";
+     }
     std::string toString() const
     {
         return "Date: " + date + "  Time: " + time + " Person: " + contactee +
@@ -60,9 +133,10 @@ public:
                description.find(keyword) != std::string::npos;
     } // Helper function for precise searching
 
-    std::string toFileString() const
+    std::string toFileString() const //This is to write to the storage file, it should be the same format as the constructor that takes a file string, so they can read/write in the same format.
     {
-        return "<D>" + date + "<D><T>" + time + "<T><C>" + contactee + "<C><L>" + location + "<L><DESC>" + description + "<DESC>";
+        std::string out = "<D>" + date + "<D><T>" + time + "<T><C>" + contactee + "<C><L>" + location + "<L><DESC>" + description + "<DESC><IMG>"+imagePath+"<IMG>";
+        return out;
     }
 };
 
