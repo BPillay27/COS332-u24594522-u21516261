@@ -157,3 +157,9 @@ std::string Page::getHTML()
 {
     return html;
 }
+
+bool Page::updateAppointments()
+{
+    
+    return true;
+}
