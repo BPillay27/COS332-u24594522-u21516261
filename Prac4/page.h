@@ -3,16 +3,7 @@
 #include <map>
 #include <ctime>
 
-enum Cities
-{
-    Johannesburg,
-    NewYork,
-    London,
-    Tokyo,
-    Frankfurt,
-    Sydney,
-    CITY_COUNT
-};
+#include "database.h"
 
 class Page
 {
@@ -23,14 +14,11 @@ public:
     void appendHTML(const std::string &content);
     void clearPage();
     std::time_t getCurrentTime() const;
-    std::time_t getCityTime(Cities city) const;
     std::string convertTimeToString(std::time_t time) const;
-    bool selectCity(Cities city);
-    bool deselectCity(Cities city);
-    void resetSelected();
     std::string getHTML();
+    void updateAppointments();
 
 private:
-    bool citySelected[CITY_COUNT];
+    
     std::string html;
 };

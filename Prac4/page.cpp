@@ -1,18 +1,10 @@
 #include "page.h"
 
-//populateTable
-//update generic to a "home page".
+// populateTable
+// update generic to a "home page".
 
 Page::Page()
 {
-    // Initialize citySelected array to false
-    for (int i = 0; i < CITY_COUNT; ++i)
-    {
-        citySelected[i] = false;
-    }
-
-    citySelected[Johannesburg] = true; // Johannesburg is selected by default
-
     html = "<!DOCTYPE html>"
            "<html>"
            "<head>"
@@ -30,49 +22,6 @@ Page::~Page()
     // Destructor logic if needed
 }
 
-void Page::resetSelected()
-{
-    for (int i = 0; i < CITY_COUNT; ++i)
-    {
-        citySelected[i] = false;
-    }
-
-    citySelected[Johannesburg] = true;
-}
-
-std::time_t Page::getCityTime(Cities city) const
-{
-    std::time_t now = std::time(NULL);
-
-    int offsetHours = 0;
-
-    switch (city)
-    {
-    case Johannesburg:
-        offsetHours = 2;
-        break;
-    case NewYork:
-        offsetHours = -5;
-        break;
-    case London:
-        offsetHours = 0;
-        break;
-    case Tokyo:
-        offsetHours = 9;
-        break;
-    case Frankfurt:
-        offsetHours = 1;
-        break;
-    case Sydney:
-        offsetHours = 10;
-        break;
-    default:
-        return now;
-    }
-
-    return now + offsetHours * 3600;
-}
-
 std::string Page::convertTimeToString(std::time_t time) const
 {
     std::tm *timeInfo = std::gmtime(&time);
@@ -81,132 +30,95 @@ std::string Page::convertTimeToString(std::time_t time) const
     return std::string(buffer);
 }
 
-bool Page::selectCity(Cities city)
-{
-    // Function tries to "turn on" the city. If city was turned on, then return true. Otherwise, return false if the city was already on.
-    if (city < 0 || city >= CITY_COUNT)
-    {
-        return false; // Invalid city
-    }
-
-    if (!citySelected[city])
-    {
-        citySelected[city] = true;
-        return true; // City was successfully selected
-    }
-    else
-    {
-        return false; // City was already selected
-    }
-}
-
-bool Page::deselectCity(Cities city)
-{
-    // Function tries to "turn off" the city. If city was turned off, then return true. Otherwise, return false if the city was already off.
-    if (city < 0 || city >= CITY_COUNT || city == Johannesburg)
-    {
-        return false; // Invalid city
-    }
-
-    if (citySelected[city])
-    {
-        citySelected[city] = false;
-        return true; // City was successfully deselected
-    }
-    else
-    {
-        return false; // City was already deselected
-    }
-}
-
 std::string Page::generateGeneric()
 {
-    std::string page;
+    std::string page = "";
 
-    page += "<!DOCTYPE html>";
-    page += "<html><head>";
-    page += "<meta charset=\"UTF-8\">";
-    page += "<meta http-equiv=\"refresh\" content=\"1\">";
-    page += "<title>World Clock</title>";
+    page += "<!DOCTYPE html>\n";
+    page += "<html lang=\"en\">\n";
+    page += "<head>\n";
+    page += "  <meta charset=\"UTF-8\" />\n";
+    page += "  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\" />\n";
+    page += "  <title>Appointments Wireframe</title>\n";
+    page += "</head>\n";
 
-    page += "<style>";
-    page += "body { font-family: Arial, sans-serif; text-align: center; background: #f5f5f5; }";
-    page += "h1 { margin-top: 30px; }";
-    page += "table { margin: auto; border-collapse: collapse; }";
-    page += "td { padding: 15px 40px; font-size: 18px; }";
-    page += "a.city { text-decoration: none; color: #0066cc; font-weight: bold; }";
-    page += "a.city:hover { text-decoration: underline; }";
-    page += "a.reset { display: inline-block; padding: 10px 20px; font-size: 16px; ";
-    page += "background: #e0e0e0; color: black; text-decoration: none; border: 1px solid #999; ";
-    page += "border-radius: 4px; margin-top: 20px; }";
-    page += "a.reset:hover { background: #d0d0d0; }";
-    page += "</style>";
+    page += "<body style=\"margin:0; background:#efefef; font-family:Arial, sans-serif;\">\n";
 
-    page += "</head><body>";
+    page += "  <div style=\"width:1300px; margin:30px auto;\">\n";
 
-    page += "<h1>World Clock</h1>";
-    page += "<table>";
+    page += "    <h1 style=\"text-align:center; font-size:50px; font-weight:normal; margin:0 0 20px 0;\">Appointments</h1>\n";
 
-    for (int i = 0; i < CITY_COUNT; i++)
-    {
-        std::string cityName;
-        std::string displayName;
+    page += "    <div style=\"background:#cfcfcf; padding:40px 35px; min-height:250px; box-sizing:border-box; position:relative;\">\n";
 
-        switch (i)
-        {
-        case Johannesburg:
-            cityName = "Johannesburg";
-            displayName = "Johannesburg";
-            break;
-        case NewYork:
-            cityName = "NewYork";
-            displayName = "New York";
-            break;
-        case London:
-            cityName = "London";
-            displayName = "London";
-            break;
-        case Tokyo:
-            cityName = "Tokyo";
-            displayName = "Tokyo";
-            break;
-        case Frankfurt:
-            cityName = "Frankfurt";
-            displayName = "Frankfurt";
-            break;
-        case Sydney:
-            cityName = "Sydney";
-            displayName = "Sydney";
-            break;
-        default:
-            continue;
-        }
+    page += "      <div style=\"width:650px;\">\n";
 
-        page += "<tr><td>";
-        page += "<a class=\"city\" href=\"/";
-        if (citySelected[i])
-            page += "Deselect/";
-        else
-            page += "Select/";
-        page += cityName;
-        page += "\">";
-        page += displayName;
-        page += "</a>";
+    page += "        <div style=\"margin-bottom:16px;\">\n";
+    page += "          <label style=\"display:inline-block; width:270px; font-size:24px;\">Patient Name:</label>\n";
+    page += "          <input type=\"text\" style=\"width:350px; height:32px; border:none; border-radius:18px; background:#f4f4f4;\" />\n";
+    page += "        </div>\n";
 
-        if (citySelected[i])
-        {
-            page += " : ";
-            page += convertTimeToString(getCityTime((Cities)i));
-        }
+    page += "        <div style=\"margin-bottom:16px;\">\n";
+    page += "          <label style=\"display:inline-block; width:270px; font-size:24px;\">Patient Surname:</label>\n";
+    page += "          <input type=\"text\" style=\"width:350px; height:32px; border:none; border-radius:18px; background:#f4f4f4;\" />\n";
+    page += "        </div>\n";
 
-        page += "</td></tr>";
-    }
+    page += "        <div style=\"margin-bottom:16px;\">\n";
+    page += "          <label style=\"display:inline-block; width:270px; font-size:24px;\">Date:</label>\n";
+    page += "          <input type=\"text\" style=\"width:350px; height:32px; border:none; border-radius:18px; background:#f4f4f4;\" />\n";
+    page += "        </div>\n";
 
-    page += "</table>";
-    page += "<br><a class=\"reset\" href=\"/Reset\">Reset</a>";
-    page += "</body></html>";
+     page += "        <div style=\"margin-bottom:16px;\">\n";
+    page += "          <label style=\"display:inline-block; width:270px; font-size:24px;\">Time:</label>\n";
+    page += "          <input type=\"text\" style=\"width:350px; height:32px; border:none; border-radius:18px; background:#f4f4f4;\" />\n";
+    page += "        </div>\n";
 
-    html = page;
+    page += "        <div>\n";
+    page += "          <label style=\"display:inline-block; width:270px; font-size:24px;\">Doctor Name:</label>\n";
+    page += "          <input type=\"text\" style=\"width:350px; height:32px; border:none; border-radius:18px; background:#f4f4f4;\" />\n";
+    page += "        </div>\n";
+
+    page += "      </div>\n";
+
+    page += "      <div style=\"position:absolute; top:18px; right:40px;\">\n";
+    page += "        <button style=\"background:#ff3b3b; border:none; border-radius:18px; padding:8px 24px; font-size:20px; margin-left:14px;\">Add</button>\n";
+    page += "        <button style=\"background:#ff3b3b; border:none; border-radius:18px; padding:8px 24px; font-size:20px; margin-left:14px;\">Search</button>\n";
+    page += "        <button style=\"background:#ff3b3b; border:none; border-radius:18px; padding:8px 24px; font-size:20px; margin-left:14px;\">Remove</button>\n";
+    page += "      </div>\n";
+
+    page += "    </div>\n";
+
+    page += "    <div style=\"background:#cfcfcf; margin-top:45px; padding:20px 25px 40px 25px; min-height:500px;\">\n";
+
+    page += "      <table style=\"width:100%; border-collapse:collapse; font-size:22px;\">\n";
+    page += "        <thead>\n";
+    page += "          <tr>\n";
+    page += "            <th style=\"text-align:left; padding-bottom:20px;\">Date</th>\n";
+    page += "            <th style=\"text-align:left; padding-bottom:20px;\">Time</th>\n";
+    page += "            <th style=\"text-align:left; padding-bottom:20px;\">Patient Name</th>\n";
+    page += "            <th style=\"text-align:left; padding-bottom:20px;\">Patient Surname</th>\n";
+    page += "            <th style=\"text-align:left; padding-bottom:20px;\">Doctor Name</th>\n";
+    page += "            <th style=\"text-align:left; padding-bottom:20px;\">Doctor Img</th>\n";
+    page += "          </tr>\n";
+    page += "        </thead>\n";
+
+    page += "        <tbody>\n";
+    page += "          <tr>\n";
+    page += "            <td>&nbsp;</td>\n";
+    page += "            <td></td>\n";
+    page += "            <td></td>\n";
+    page += "            <td></td>\n";
+    page += "            <td></td>\n";
+    page += "          </tr>\n";
+    page += "        </tbody>\n";
+
+    page += "      </table>\n";
+
+    page += "    </div>\n";
+
+    page += "  </div>\n";
+
+    page += "</body>\n";
+    page += "</html>\n";
     return page;
 }
 
