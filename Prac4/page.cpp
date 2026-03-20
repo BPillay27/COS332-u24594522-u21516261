@@ -53,12 +53,12 @@ std::string Page::generateGeneric()
     page += "      <div style=\"width:650px;\">\n";
 
     page += "        <div style=\"margin-bottom:16px;\">\n";
-    page += "          <label style=\"display:inline-block; width:270px; font-size:24px;\">Patient Name:</label>\n";
+    page += "          <label style=\"display:inline-block; width:270px; font-size:24px;\">Name:</label>\n";
     page += "          <input type=\"text\" style=\"width:350px; height:32px; border:none; border-radius:18px; background:#f4f4f4;\" />\n";
     page += "        </div>\n";
 
     page += "        <div style=\"margin-bottom:16px;\">\n";
-    page += "          <label style=\"display:inline-block; width:270px; font-size:24px;\">Patient Surname:</label>\n";
+    page += "          <label style=\"display:inline-block; width:270px; font-size:24px;\">Surname:</label>\n";
     page += "          <input type=\"text\" style=\"width:350px; height:32px; border:none; border-radius:18px; background:#f4f4f4;\" />\n";
     page += "        </div>\n";
 
@@ -69,11 +69,6 @@ std::string Page::generateGeneric()
 
      page += "        <div style=\"margin-bottom:16px;\">\n";
     page += "          <label style=\"display:inline-block; width:270px; font-size:24px;\">Time:</label>\n";
-    page += "          <input type=\"text\" style=\"width:350px; height:32px; border:none; border-radius:18px; background:#f4f4f4;\" />\n";
-    page += "        </div>\n";
-
-    page += "        <div>\n";
-    page += "          <label style=\"display:inline-block; width:270px; font-size:24px;\">Doctor Name:</label>\n";
     page += "          <input type=\"text\" style=\"width:350px; height:32px; border:none; border-radius:18px; background:#f4f4f4;\" />\n";
     page += "        </div>\n";
 
@@ -94,9 +89,8 @@ std::string Page::generateGeneric()
     page += "          <tr>\n";
     page += "            <th style=\"text-align:left; padding-bottom:20px;\">Date</th>\n";
     page += "            <th style=\"text-align:left; padding-bottom:20px;\">Time</th>\n";
-    page += "            <th style=\"text-align:left; padding-bottom:20px;\">Patient Name</th>\n";
-    page += "            <th style=\"text-align:left; padding-bottom:20px;\">Patient Surname</th>\n";
-    page += "            <th style=\"text-align:left; padding-bottom:20px;\">Doctor Name</th>\n";
+    page += "            <th style=\"text-align:left; padding-bottom:20px;\">Name</th>\n";
+    page += "            <th style=\"text-align:left; padding-bottom:20px;\">Surname</th>\n";
     page += "            <th style=\"text-align:left; padding-bottom:20px;\">Doctor Img</th>\n";
     page += "          </tr>\n";
     page += "        </thead>\n";
