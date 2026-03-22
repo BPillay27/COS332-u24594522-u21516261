@@ -9,8 +9,7 @@ Page::Page()
            "<html>"
            "<head>"
            "<meta charset=\"UTF-8\">"
-           "<meta http-equiv=\"refresh\" content=\"1\">"
-           "<title>World Clock</title>"
+           "<title>Appointments</title>"
            "</head>"
            "<body>";
 
@@ -88,7 +87,7 @@ std::string Page::generateGeneric()
     page += "<head>\n";
     page += "  <meta charset=\"UTF-8\" />\n";
     page += "  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\" />\n";
-    page += "  <title>Appointments Wireframe</title>\n";
+    page += "  <title>Appointments</title>\n";
     page += "</head>\n";
 
     page += "<body style=\"margin:0; background:#efefef; font-family:Arial, sans-serif;\">\n";
@@ -202,8 +201,7 @@ void Page::clearPage()
            "<html>"
            "<head>"
            "<meta charset=\"UTF-8\">"
-           "<meta http-equiv=\"refresh\" content=\"1\">"
-           "<title>World Clock</title>"
+           "<title>Appointments</title>"
            "</head>"
            "<body>";
 
