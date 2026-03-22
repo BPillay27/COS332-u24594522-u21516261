@@ -356,6 +356,8 @@ public:
         return;
     }
 
+    const std::vector<day*> &getDays() const { return days; };
+
     std::string printAll() const
     {
         std::string output = "";
