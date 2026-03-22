@@ -1,7 +1,7 @@
 #include "Server.h"
 
 Server::Server(int port) {
-    db=new Database("db.txt");
+    db=new Database("database.txt");
     page = Page();
     //Remove above for other server.
     std::memset(&address, 0, sizeof(address));
@@ -131,7 +131,7 @@ static const std::string AUTH_TOKEN = "Admin";
 
 std::string Server::process_request(const std::string& request) {
     //Change this depending on the server's functionality. For now, it just checks if the request starts with "GET " and responds with a simple message. 
-    //std::cout<< "Received request:\n" << request << "\n" << std::endl;
+    std::cout<< "Received request:\n" << request << "\n" << std::endl;
     //For testing
     std::lock_guard<std::mutex> lock(page_mutex);
     std::string response="";
@@ -153,7 +153,7 @@ std::string Server::process_request(const std::string& request) {
             page.generateGeneric();
             response = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nContent-Length: " + std::to_string(page.getHTML().size()) + "\r\n\r\n" + page.getHTML();
             std::cout<< "Favicon request received, responding with main page.\nThe main page:\n";
-            std::cout<< page.getHTML();
+            //std::cout<< page.getHTML();
         }else if(request.find("GET / HTTP/1.1") == 0 || request.find("GET / HTTP/1.0") == 0){
             //page.clearPage();
             page.updateDays(db->getDays());
@@ -171,12 +171,14 @@ std::string Server::process_request(const std::string& request) {
             std::string keyword = request.substr(pos, pos2);
            
             std::vector<Appointment*> array=db->search(keyword);
+
+            //std::cout<<db->printAll();
             page.clearPage();
             page.updateDays(array);
             page.generateGeneric();
-
             response = "HTTP/1.1 200 Found\r\nLocation: /\r\nContent-Length: "+std::to_string(page.getHTML().size()) + "\r\n\r\n"+page.getHTML();
         }else if(request.find("/favicon.ico HTTP/1.1") != std::string::npos){
+           // std::cout<<db->printAll();
             page.clearPage();
             page.updateDays(db->getDays());
             page.generateGeneric();
@@ -185,7 +187,6 @@ std::string Server::process_request(const std::string& request) {
         }else if(request.find("GET / HTTP/1.1") == 0 || request.find("GET / HTTP/1.0") == 0){
             page.clearPage();
             page.updateDays(db->getDays());
-            page.generateGeneric();
             page.generateGeneric();
             response = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nContent-Length: " + std::to_string(page.getHTML().size()) + "\r\n\r\n" + page.getHTML();
         }else{

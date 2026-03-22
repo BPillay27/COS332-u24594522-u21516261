@@ -304,10 +304,12 @@ void Page::updateDays(std::vector<Appointment *> _appointments)
 
 void Page::updateDays(std::vector<day *> newDays)
 {
+    /*
     for (day *oldDay : days)
     {
         delete oldDay;
     }
+    Don't delete my days you mad man    */
     days.clear();
 
     for (day *sourceDay : newDays)
