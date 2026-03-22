@@ -66,12 +66,47 @@ void Server::send_response(int client_fd, const std::string& response) {
 std::string Server::read_request(int client_fd) {
     std::string request;
     char buffer[1024];
+    // Read headers (until CRLF CRLF)
     while (request.find("\r\n\r\n") == std::string::npos) {
         ssize_t bytes_read = read(client_fd, buffer, sizeof(buffer) - 1);
         if (bytes_read <= 0) break;
         buffer[bytes_read] = '\0';
         request += buffer;
     }
+
+    // If there's a Content-Length header, read the remaining body bytes
+    size_t headers_end = request.find("\r\n\r\n");
+    if (headers_end != std::string::npos) {
+        size_t cl_pos = request.find("Content-Length:");
+        if (cl_pos == std::string::npos) cl_pos = request.find("content-length:");
+        if (cl_pos != std::string::npos) {
+            size_t val_start = request.find_first_not_of(' ', cl_pos + std::string("Content-Length:").size());
+            if (val_start != std::string::npos) {
+                size_t val_end = request.find("\r\n", val_start);
+                if (val_end != std::string::npos && val_end > val_start) {
+                    std::string val = request.substr(val_start, val_end - val_start);
+                    try {
+                        long content_length = std::stol(val);
+                        if (content_length > 0) {
+                            
+                            size_t already = request.size() - (headers_end + 4);
+                            long remaining = content_length - static_cast<long>(already);
+                            while (remaining > 0) {
+                                ssize_t bytes_read = read(client_fd, buffer, (size_t)std::min<long>(sizeof(buffer) - 1, remaining));
+                                if (bytes_read <= 0) break;
+                                buffer[bytes_read] = '\0';
+                                request.append(buffer, (size_t)bytes_read);
+                                remaining -= bytes_read;
+                            }
+                        }
+                    } catch (...) {
+                        // Ignoring the parsing errors
+                    }
+                }
+            }
+        }
+    }
+
     return request;
 }
 
@@ -92,7 +127,6 @@ static std::string withDate(const std::string& response) {
     return r;
 }
 
-// Simple auth token for single-request protection
 static const std::string AUTH_TOKEN = "Admin";
 
 std::string Server::process_request(const std::string& request) {
@@ -105,18 +139,24 @@ std::string Server::process_request(const std::string& request) {
         if(request.find("/searchAppointments??keyword=<") != std::string::npos){
             size_t pos = request.find("<") + 1;
             size_t pos2 = request.find(">")-1;
-            std::string keyword = request.substr(pos, pos2);
+            std::string keyword = request.substr(pos, pos2-pos);
            
             std::vector<Appointment*> array=db->search(keyword);
+            //page.clearPage();
             page.updateDays(array);
             page.generateGeneric();
 
             response = "HTTP/1.1 200 Found\r\nLocation: /\r\nContent-Length: "+std::to_string(page.getHTML().size()) + "\r\n\r\n"+page.getHTML();
         }else if(request.find("/favicon.ico HTTP/1.1") != std::string::npos){
+            //page.clearPage();
+            page.updateDays(db->getDays());
             page.generateGeneric();
             response = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nContent-Length: " + std::to_string(page.getHTML().size()) + "\r\n\r\n" + page.getHTML();
-            std::cout<< "Favicon request received, responding with main page.\n";
+            std::cout<< "Favicon request received, responding with main page.\nThe main page:\n";
+            std::cout<< page.getHTML();
         }else if(request.find("GET / HTTP/1.1") == 0 || request.find("GET / HTTP/1.0") == 0){
+            //page.clearPage();
+            page.updateDays(db->getDays());
             page.generateGeneric();
             response = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nContent-Length: " + std::to_string(page.getHTML().size()) + "\r\n\r\n" + page.getHTML();
         }else{
@@ -125,9 +165,34 @@ std::string Server::process_request(const std::string& request) {
             response = "HTTP/1.1 405 Method Not Allowed\r\nAllow: GET\r\nContent-Type: text/html\r\nContent-Length: " + std::to_string(page.getHTML().size()) + "\r\n\r\n" + page.getHTML();
         }
     } else if (request.find("POST ") == 0) {
-        page.clearPage();
-        page.appendHTML("<p>Hi, I appreciate it but that is not implemented</p>");
-        response = "HTTP/1.1 405 Not A Supported Method\r\nAllow: GET\r\nContent-Type: text/html\r\nContent-Length: " + std::to_string(page.getHTML().size()) + "\r\n\r\n" + page.getHTML();
+        if(request.find("/deleteAppointment") != std::string::npos){
+            size_t pos = request.find("<") + 1;
+            size_t pos2 = request.find(">")-1;
+            std::string keyword = request.substr(pos, pos2);
+           
+            std::vector<Appointment*> array=db->search(keyword);
+            page.clearPage();
+            page.updateDays(array);
+            page.generateGeneric();
+
+            response = "HTTP/1.1 200 Found\r\nLocation: /\r\nContent-Length: "+std::to_string(page.getHTML().size()) + "\r\n\r\n"+page.getHTML();
+        }else if(request.find("/favicon.ico HTTP/1.1") != std::string::npos){
+            page.clearPage();
+            page.updateDays(db->getDays());
+            page.generateGeneric();
+            response = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nContent-Length: " + std::to_string(page.getHTML().size()) + "\r\n\r\n" + page.getHTML();
+            std::cout<< "Favicon request received, responding with main page.\n";
+        }else if(request.find("GET / HTTP/1.1") == 0 || request.find("GET / HTTP/1.0") == 0){
+            page.clearPage();
+            page.updateDays(db->getDays());
+            page.generateGeneric();
+            page.generateGeneric();
+            response = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nContent-Length: " + std::to_string(page.getHTML().size()) + "\r\n\r\n" + page.getHTML();
+        }else{
+            page.clearPage();
+            page.appendHTML("<p>You think I would allow you to do what ever you want, keep dreaming </p>");
+            response = "HTTP/1.1 405 Method Not Allowed\r\nAllow: GET\r\nContent-Type: text/html\r\nContent-Length: " + std::to_string(page.getHTML().size()) + "\r\n\r\n" + page.getHTML();
+        }
     }else{
         page.clearPage();
         page.appendHTML("<p> Bad Request: This was not generated by our page</p>");
