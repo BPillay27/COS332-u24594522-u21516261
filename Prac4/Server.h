@@ -5,6 +5,7 @@
 #include <mutex>
 #include <netinet/in.h>
 #include <string>
+#include <map>
 #include <arpa/inet.h>
 #include <cerrno>
 #include <cstring>
@@ -36,7 +37,9 @@ private:
     void send_response(int client_fd, const std::string& response);
     std::string read_request(int client_fd);
     std::string process_request(const std::string& request);
-
+    std::string url_decode(const std::string &s);
+    std::map<std::string,std::string> parse_urlencoded(const std::string &body);
+    std::map<std::string,std::string> parse_multipart(const std::string &body, const std::string &boundary);
     Page page;
     std::mutex page_mutex;
     Database* db;

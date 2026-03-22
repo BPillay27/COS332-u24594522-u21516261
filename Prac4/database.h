@@ -49,20 +49,23 @@ static inline std::string base64_encode(const std::string &in) {
 }
 
 static inline std::string base64_decode(const std::string &in) {
-        std::string out;
-        std::vector<int> T(256, -1);
-        for (int i = 0; i < 64; ++i) T[(unsigned)b64_chars[i]] = i;
-        int val = 0, valb = -8;
-        for (unsigned char c : in) {
-                if (T[c] == -1) break;
-                val = (val << 6) + T[c];
-                valb += 6;
-                if (valb >= 0) {
-                        out.push_back(char((val >> valb) & 0xFF));
-                        valb -= 8;
-                }
+    std::string out;
+    std::vector<int> T(256, -1);
+    for (int i = 0; i < 64; ++i) T[(unsigned)b64_chars[i]] = i;
+    int val = 0, valb = -8;
+    for (unsigned char c : in) {
+        // '=' is padding: stop processing further base64 characters
+        if (c == '=') break;
+        // skip characters not in base64 alphabet (whitespace/newlines/etc)
+        if (T[c] == -1) continue;
+        val = (val << 6) + T[c];
+        valb += 6;
+        if (valb >= 0) {
+            out.push_back(char((val >> valb) & 0xFF));
+            valb -= 8;
         }
-        return out;
+    }
+    return out;
 }
 
 class Appointment
@@ -75,10 +78,10 @@ private:
     std::string description; // Should be able to be ignored
     std::string imagePath;    // Should be able to be ignored
 public:
-    Appointment(std::string date, std::string time, std::string contactee,
-                std::string location = "", std::string description = "", std::string imagePath = "")
-        : date(date), time(time), contactee(contactee),
-          location(location), description(description), imagePath(base64_decode(imagePath)) {}
+        Appointment(std::string date, std::string time, std::string contactee,
+                                std::string location = "", std::string description = "", std::string imagePath = "")
+                : date(date), time(time), contactee(contactee),
+                    location(location), description(description), imagePath(imagePath) {}
     Appointment() : date(""), time(""), contactee(""), location(""), description(""), imagePath("") {}
     Appointment(std::string fileString)
     {
@@ -104,7 +107,9 @@ public:
 
         size_t imgStart = fileString.find("<IMG>") + 5;
         size_t imgEnd = fileString.find("<IMG>", imgStart);
-        imagePath = fileString.substr(imgStart, imgEnd - imgStart);
+        std::string stored = fileString.substr(imgStart, imgEnd - imgStart);
+        // stored value in file is the stored file path
+        imagePath = stored;
     }
     ~Appointment() {}
     std::string getDate() const { return date; }
@@ -112,15 +117,20 @@ public:
     std::string getContactee() const { return contactee; }
     std::string getLocation() const { return location; }
     std::string getDescription() const { return description; }
-    std::string getImagePath() const { //this return a HTML img tag using a temp file created from the base64 string stored in imagePath
-        
+    std::string getImagePath() const {
         if (imagePath.empty()) return std::string();
-        std::string bytes = base64_decode(imagePath);
-        if (bytes.empty()) return std::string();
-        std::string tmp = writeTempFile(bytes);
-        if (tmp.empty()) return std::string();
-        return std::string("<img src=\"") + tmp + "\" alt=\"image\">";
+        std::string src = imagePath;
+        // Ensure uploads paths have a leading slash
+        if (src.rfind("/uploads/", 0) != 0 && src.rfind("/", 0) != 0 && src.rfind("http", 0) != 0) {
+            // likely a relative path like "uploads/..." → prefix '/'
+            src = std::string("/") + src;
+        }
+        // Render as a small thumbnail (fixed size) with object-fit to preserve aspect ratio
+        return std::string("<img src=\"") + src + "\" alt=\"image\" style=\"width:80px;height:80px;object-fit:cover;border-radius:6px;\" />";
      }
+    // Return the stored image path or data (not HTML).
+    std::string getImageStored() const { return imagePath; }
+     
     std::string toString() const
     {
         return "Date: " + date + "  Time: " + time + " Person: " + contactee +
@@ -136,9 +146,10 @@ public:
                description.find(keyword) != std::string::npos;
     } // Helper function for precise searching
 
-    std::string toFileString() const //This is to write to the storage file, it should be the same format as the constructor that takes a file string, so they can read/write in the same format.
+    std::string toFileString() const 
     {
-        std::string out = "<D>" + date + "<D><T>" + time + "<T><C>" + contactee + "<C><L>" + location + "<L><DESC>" + description + "<DESC><IMG>"+imagePath+"<IMG>";
+        // store image path directly in file
+        std::string out = "<D>" + date + "<D><T>" + time + "<T><C>" + contactee + "<C><L>" + location + "<L><DESC>" + description + "<DESC><IMG>" + imagePath + "<IMG>\n";
         return out;
     }
 };
@@ -375,6 +386,7 @@ public:
 
     ~Database()
     {
+        saveToFile();
         for (auto &d : days)
         {
             delete d;
@@ -384,14 +396,22 @@ public:
     void saveToFile()
     {
         std::ofstream file(filename);
+        if (!file.is_open()) {
+            std::cerr << "Error: Unable to open the file." << std::endl;
+            return ; // Or handle the error as needed
+        }
+
         for (const auto &d : days)
         {
             const auto &appts = d->getAppointments();
             for (const auto &apt : appts)
             {
-                file << apt->toFileString() << "\n";
+                std::string line = apt->toFileString();
+                file<<line;
+                
             }
         }
+        file.close();
     }
 };
 

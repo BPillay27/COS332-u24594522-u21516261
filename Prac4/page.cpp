@@ -98,7 +98,7 @@ std::string Page::generateGeneric()
 
     // Add form
     page += "    <div style=\"background:#cfcfcf; padding:40px 35px; min-height:250px; box-sizing:border-box; position:relative;\">\n";
-    page += "      <form action=\"/addAppointment\" method=\"POST\">\n";
+    page += "      <form action=\"/addAppointment\" method=\"POST\" enctype=\"multipart/form-data\">\n";
 
     page += "        <div style=\"width:650px;\">\n";
 
@@ -128,8 +128,8 @@ std::string Page::generateGeneric()
     page += "          </div>\n";
 
     page += "          <div style=\"margin-bottom:16px;\">\n";
-    page += "            <label style=\"display:inline-block; width:270px; font-size:24px;\">Image Path</label>\n";
-    page += "            <input name=\"imagePath\" type=\"text\" style=\"width:350px; height:32px; border:none; border-radius:18px; background:#f4f4f4;\" />\n";
+    page += "            <label style=\"display:inline-block; width:270px; font-size:24px;\">Image</label>\n";
+    page += "            <input name=\"image\" type=\"file\" accept=\"image/*\" style=\"width:350px; border-radius:18px; background:#f4f4f4;\" />\n";
     page += "          </div>\n";
 
     page += "        </div>\n";
@@ -275,7 +275,7 @@ void Page::updateDays(std::vector<Appointment *> _appointments)
     {
         if (app != nullptr)
         {
-            appointments.push_back(new Appointment(app->getDate(), app->getTime(), app->getContactee(), app->getLocation(), app->getDescription(), app->getImagePath()));
+            appointments.push_back(new Appointment(app->getDate(), app->getTime(), app->getContactee(), app->getLocation(), app->getDescription(), app->getImageStored()));
         }
     }
 
@@ -331,7 +331,7 @@ void Page::updateDays(std::vector<day *> newDays)
                 continue;
             }
 
-            Appointment *copiedApp = new Appointment(app->getDate(), app->getTime(), app->getContactee(), app->getLocation(), app->getDescription(), app->getImagePath());
+            Appointment *copiedApp = new Appointment(app->getDate(), app->getTime(), app->getContactee(), app->getLocation(), app->getDescription(), app->getImageStored());
             copiedAppointments.push_back(copiedApp);
         }
 
