@@ -279,7 +279,9 @@ void Page::updateDays(std::vector<Appointment *> _appointments)
         }
     }
 
-    std::sort(appointments.begin(), appointments.end(), compareDateTime);
+    std::sort(appointments.begin(), appointments.end(), [this](Appointment *a, Appointment *b) {
+        return compareDateTime(a, b);
+    });
 
     std::string currentDate = "";
     day *currentDay = nullptr;
