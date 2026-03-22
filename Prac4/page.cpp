@@ -9,8 +9,7 @@ Page::Page()
            "<html>"
            "<head>"
            "<meta charset=\"UTF-8\">"
-           "<meta http-equiv=\"refresh\" content=\"1\">"
-           "<title>World Clock</title>"
+           "<title>Appointments</title>"
            "</head>"
            "<body>";
 
@@ -19,7 +18,15 @@ Page::Page()
 
 Page::~Page()
 {
-    // Destructor logic if needed
+    if(!days.empty()){
+        for(day* _days : days){
+            if(_days !=nullptr){
+                delete _days;
+            }
+        }
+
+        days.clear();
+    }
 }
 
 std::string Page::convertTimeToString(std::time_t time) const
@@ -80,7 +87,7 @@ std::string Page::generateGeneric()
     page += "<head>\n";
     page += "  <meta charset=\"UTF-8\" />\n";
     page += "  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\" />\n";
-    page += "  <title>Appointments Wireframe</title>\n";
+    page += "  <title>Appointments</title>\n";
     page += "</head>\n";
 
     page += "<body style=\"margin:0; background:#efefef; font-family:Arial, sans-serif;\">\n";
@@ -194,8 +201,7 @@ void Page::clearPage()
            "<html>"
            "<head>"
            "<meta charset=\"UTF-8\">"
-           "<meta http-equiv=\"refresh\" content=\"1\">"
-           "<title>World Clock</title>"
+           "<title>Appointments</title>"
            "</head>"
            "<body>";
 
@@ -207,7 +213,7 @@ std::string Page::getHTML()
     return html;
 }
 
-bool compareDates(const std::string &a, const std::string &b)
+bool Page::compareDates(const std::string &a, const std::string &b)
 {
     int d1, m1, y1;
     int d2, m2, y2;
@@ -222,63 +228,140 @@ bool compareDates(const std::string &a, const std::string &b)
     return d1 < d2;
 }
 
-void Page::updateDays(std::vector<Appointment *> appointments)
+
+
+bool Page::compareTimes(const std::string &a, const std::string &b)
 {
+    int h1, m1;
+    int h2, m2;
+
+    sscanf(a.c_str(), "%d:%d", &h1, &m1);
+    sscanf(b.c_str(), "%d:%d", &h2, &m2);
+
+    if (h1 != h2)
+        return h1 < h2;
+
+    return m1 < m2;
+}
+
+bool Page::compareDateTime(const Appointment *a, const Appointment *b)
+{
+    // compare dates first
+    if (a->getDate() != b->getDate())
+    {
+        return compareDates(a->getDate(), b->getDate());
+    }
+
+    // if same date → compare time
+    return compareTimes(a->getTime(), b->getTime());
+}
+
+void Page::updateDays(std::vector<Appointment *> _appointments)
+{
+    for (day *d : days)
+    {
+        delete d;
+    }
     days.clear();
 
-    if (appointments.empty())
+    if (_appointments.empty())
     {
         return;
     }
 
-    std::vector<std::string> dates;
+    std::vector<Appointment *> appointments;
 
-    for (auto app : appointments)
+    for (Appointment *app : _appointments)
+    {
+        if (app != nullptr)
+        {
+            appointments.push_back(new Appointment(app->getDate(), app->getTime(), app->getContactee(), app->getLocation(), app->getDescription(), app->getImagePath()));
+        }
+    }
+
+    std::sort(appointments.begin(), appointments.end(), compareDateTime);
+
+    std::string currentDate = "";
+    day *currentDay = nullptr;
+
+    for (Appointment *app : appointments)
     {
         if (app == nullptr)
+            continue;
+
+        if (currentDate != app->getDate())
+        {
+            currentDate = app->getDate();
+            currentDay = new day(currentDate);
+            days.push_back(currentDay);
+        }
+
+        currentDay->addAppointment(*app);
+    }
+}
+
+void Page::updateDays(std::vector<day *> newDays)
+{
+    for (day *oldDay : days)
+    {
+        delete oldDay;
+    }
+    days.clear();
+
+    for (day *sourceDay : newDays)
+    {
+        if (sourceDay == nullptr)
         {
             continue;
         }
 
-        bool exists = false;
-        for (std::string s : dates)
-        {
-            if (s == app->getDate())
-            {
-                exists = true;
-                break;
-            }
-        }
+        day *copiedDay = new day(sourceDay->getDate());
 
-        if (!exists)
-        {
-            dates.push_back(app->getDate());
-        }
-    }
+        std::vector<Appointment *> sourceAppointments = sourceDay->getAppointments();
+        std::vector<Appointment *> copiedAppointments;
 
-    // at this point, dates contains the unique dates of the appointments.
-    std::sort(dates.begin(), dates.end(), compareDates);
-
-    for (const std::string &date : dates)
-    {
-        day *temp = new day(date);
-        for (Appointment *app : appointments)
+        for (Appointment *app : sourceAppointments)
         {
             if (app == nullptr)
             {
                 continue;
             }
 
-            if (app->getDate() == date)
-            {
-                temp->addAppointment(*app);
-            }
+            Appointment *copiedApp = new Appointment(app->getDate(), app->getTime(), app->getContactee(), app->getLocation(), app->getDescription(), app->getImagePath());
+            copiedAppointments.push_back(copiedApp);
         }
-        days.push_back(temp);
-    }
-}
 
-void Page::updateDays(std::vector<day *> newDays)
-{
-    this->days = newDays;
+        std::sort(copiedAppointments.begin(), copiedAppointments.end(),
+                  [this](Appointment *a, Appointment *b)
+                  {
+                      if (a == nullptr || b == nullptr)
+                      {
+                          return false;
+                      }
+
+                      return compareTimes(a->getTime(), b->getTime());
+                  });
+
+        for (Appointment *app : copiedAppointments)
+        {
+            if (app == nullptr)
+            {
+                continue;
+            }
+
+            copiedDay->addAppointment(*app);
+            delete app;
+        }
+
+        days.push_back(copiedDay);
+    }
+
+    std::sort(days.begin(), days.end(), [this](day *a, day *b)
+              {
+                  if (a == nullptr || b == nullptr)
+                  {
+                      return false;
+                  }
+
+                  return compareDates(a->getDate(), b->getDate()); });
 }
