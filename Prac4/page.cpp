@@ -179,7 +179,7 @@ std::string Page::generateGeneric()
 
     page += "</body>\n";
     page += "</html>\n";
-
+    html = page;
     return page;
 }
 
