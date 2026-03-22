@@ -19,6 +19,7 @@
 
 //Change the includes aftter this
 #include "page.h"
+#include "database.h"
 
 
 class Server {
@@ -38,6 +39,7 @@ private:
 
     Page page;
     std::mutex page_mutex;
+    Database* db;
 
 };
 

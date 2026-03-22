@@ -1,7 +1,7 @@
 #include "Server.h"
 
-
 Server::Server(int port) {
+    db=new Database("db.txt");
     page = Page();
     //Remove above for other server.
     std::memset(&address, 0, sizeof(address));
@@ -49,6 +49,7 @@ void Server::run() {
 void Server::stop() {
     running = false;
     close(server_no);
+    delete db;
 }
 
 void Server::handle_client(int client_fd) {
@@ -101,102 +102,20 @@ std::string Server::process_request(const std::string& request) {
     std::lock_guard<std::mutex> lock(page_mutex);
     std::string response="";
     if (request.find("GET ") == 0) {
-        if(request.find("/Select/") != std::string::npos){
-            size_t pos = request.find("/Select/") + 8;
-            std::string cityName = request.substr(pos, request.find(" ", pos) - pos);
-            if     (cityName == "Johannesburg"){
-                page.selectCity(Johannesburg);
-            } 
-            else if(cityName == "NewYork"){
-                page.selectCity(NewYork);
-            }      
-            else if(cityName == "London"){
-                page.selectCity(London);
-            }    
-            else if(cityName == "Tokyo"){
-                page.selectCity(Tokyo);
-            }     
-            else if(cityName == "Frankfurt"){
-                page.selectCity(Frankfurt);
-            }    
-            else if(cityName == "Sydney"){
-                page.selectCity(Sydney);
-            }      
-            else if(cityName=="Johannesburg"){
-                page.selectCity(Johannesburg);
-            }
-            else {
-                page.generateGeneric();
-                page.appendHTML("<p>"+cityName+" is not a valid city on the list.</p>");
-                response = "HTTP/1.1 404 Not Found\r\nContent-Type: text/html\r\nContent-Length: " + std::to_string(page.getHTML().size()) + "\r\n\r\n" + page.getHTML();
-                return withDate(response);
-            }
-            response = "HTTP/1.1 302 Found\r\nLocation: /\r\nContent-Length: 0\r\n\r\n";
-        }else if(request.find("/Deselect/") != std::string::npos){
-            size_t pos = request.find("/Deselect/") + 10;
-            std::string cityName = request.substr(pos, request.find(" ", pos) - pos);
-            if     (cityName == "NewYork"){
-                page.deselectCity(NewYork);
-            }   
-            else if(cityName == "London"){
-                page.deselectCity(London);
-            }    
-            else if(cityName == "Tokyo"){
-                page.deselectCity(Tokyo);
-            }     
-            else if(cityName == "Frankfurt"){
-                page.deselectCity(Frankfurt);
-            } 
-            else if(cityName == "Sydney"){
-                page.deselectCity(Sydney);
-            }    
-            else if(cityName == "Johannesburg"){
-                page.deselectCity(Johannesburg);
-            }
-            else {
-                page.generateGeneric();
-                page.appendHTML("<p>"+cityName+" is not a valid city on the list.</p>");
-                response = "HTTP/1.1 404 Not Found\r\nContent-Type: text/html\r\nContent-Length: " + std::to_string(page.getHTML().size()) + "\r\n\r\n" + page.getHTML();
-                return withDate(response);
-            }
-            response = "HTTP/1.1 302 Found\r\nLocation: /\r\nContent-Length: 0\r\n\r\n";
-        }else if(request.find("/Reset") != std::string::npos){
+        if(request.find("/searchAppointments??keyword=<") != std::string::npos){
+            size_t pos = request.find("<") + 1;
+            size_t pos2 = request.find(">")-1;
+            std::string keyword = request.substr(pos, pos2);
            
-            page.clearPage();
-            page.resetSelected();
-            response = "HTTP/1.1 302 Found\r\nLocation: /\r\nContent-Length: 0\r\n\r\n";
+            std::vector<Appointment*> array=db->search(keyword);
+            page.updateDays(array);
+            page.generateGeneric();
+
+            response = "HTTP/1.1 200 Found\r\nLocation: /\r\nContent-Length: "+std::to_string(page.getHTML().size()) + "\r\n\r\n"+page.getHTML();
         }else if(request.find("/favicon.ico HTTP/1.1") != std::string::npos){
             page.generateGeneric();
             response = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nContent-Length: " + std::to_string(page.getHTML().size()) + "\r\n\r\n" + page.getHTML();
             std::cout<< "Favicon request received, responding with main page.\n";
-        }else if(request.find("files/")!= std::string::npos){
-        // Require a Bearer token in the Authorization header for this endpoint
-            const std::string authPrefix = "Authorization: Bearer ";
-            bool authorized = false;
-            size_t authPos = request.find(authPrefix);
-            if (authPos != std::string::npos) {
-                size_t tokenStart = authPos + authPrefix.size();
-                size_t tokenEnd = request.find("\r\n", tokenStart);
-                if (tokenEnd != std::string::npos && tokenEnd > tokenStart) {
-                    std::string token = request.substr(tokenStart, tokenEnd - tokenStart);
-                    if (token == AUTH_TOKEN) authorized = true;
-                }
-            }
-            if (!authorized) {
-                page.clearPage();
-                page.appendHTML("<p>Unauthorized</p>");
-                response = "HTTP/1.1 401 Unauthorized\r\nWWW-Authenticate: Bearer realm=\"Restricted\"\r\nContent-Type: text/html\r\nContent-Length: " + std::to_string(page.getHTML().size()) + "\r\n\r\n" + page.getHTML();
-                return withDate(response);
-            }
-            page.clearPage();
-            page.appendHTML("<p>Authorized access to protected resource.</p>");
-            page.appendHTML("<p>main.cpp</p>");
-            page.appendHTML("<p>Server.cpp</p>");
-            page.appendHTML("<p>Server.h</p>");
-            page.appendHTML("<p>Page.cpp</p>");
-            page.appendHTML("<p>Page.h</p>");
-            response = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nContent-Length: " + std::to_string(page.getHTML().size()) + "\r\n\r\n" + page.getHTML();
-            return withDate(response);
         }else if(request.find("GET / HTTP/1.1") == 0 || request.find("GET / HTTP/1.0") == 0){
             page.generateGeneric();
             response = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nContent-Length: " + std::to_string(page.getHTML().size()) + "\r\n\r\n" + page.getHTML();
