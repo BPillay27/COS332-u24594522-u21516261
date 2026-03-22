@@ -34,6 +34,47 @@ std::string Page::generateGeneric()
 {
     std::string page = "";
 
+    std::string rows = "";
+
+    for (size_t i = 0; i < days.size(); i++)
+    {
+        std::vector<Appointment *> appointments = days[i]->getAppointments();
+
+        for (size_t j = 0; j < appointments.size(); j++)
+        {
+            Appointment *apt = appointments[j];
+
+            if (apt == nullptr)
+            {
+                continue;
+            }
+
+            rows += "          <tr>\n";
+            rows += "            <td>" + apt->getDate() + "</td>\n";
+            rows += "            <td>" + apt->getTime() + "</td>\n";
+            rows += "            <td>" + apt->getContactee() + "</td>\n";
+            rows += "            <td>" + apt->getLocation() + "</td>\n";
+            rows += "            <td>" + apt->getDescription() + "</td>\n";
+            rows += "            <td>" + apt->getImagePath() + "</td>\n";
+            rows += "            <td>\n";
+            rows += "              <form action=\"/deleteAppointment\" method=\"POST\" style=\"margin:0;\">\n";
+            rows += "                <input type=\"hidden\" name=\"date\" value=\"" + apt->getDate() + "\" />\n";
+            rows += "                <input type=\"hidden\" name=\"time\" value=\"" + apt->getTime() + "\" />\n";
+            rows += "                <input type=\"hidden\" name=\"contactee\" value=\"" + apt->getContactee() + "\" />\n";
+            rows += "                <button type=\"submit\" style=\"background:#ff3b3b; border:none; border-radius:12px; padding:4px 12px;\">Delete</button>\n";
+            rows += "              </form>\n";
+            rows += "            </td>\n";
+            rows += "          </tr>\n";
+        }
+    }
+
+    if (rows.empty())
+    {
+        rows += "          <tr>\n";
+        rows += "            <td colspan=\"7\">No appointments found.</td>\n";
+        rows += "          </tr>\n";
+    }
+
     page += "<!DOCTYPE html>\n";
     page += "<html lang=\"en\">\n";
     page += "<head>\n";
@@ -48,50 +89,62 @@ std::string Page::generateGeneric()
 
     page += "    <h1 style=\"text-align:center; font-size:50px; font-weight:normal; margin:0 0 20px 0;\">Appointments</h1>\n";
 
+    // Add form
     page += "    <div style=\"background:#cfcfcf; padding:40px 35px; min-height:250px; box-sizing:border-box; position:relative;\">\n";
+    page += "      <form action=\"/addAppointment\" method=\"POST\">\n";
 
-    page += "      <div style=\"width:650px;\">\n";
+    page += "        <div style=\"width:650px;\">\n";
 
-    page += "        <div style=\"margin-bottom:16px;\">\n";
-    page += "          <label style=\"display:inline-block; width:270px; font-size:24px;\">Date:</label>\n";
-    page += "          <input type=\"text\" style=\"width:350px; height:32px; border:none; border-radius:18px; background:#f4f4f4;\" />\n";
+    page += "          <div style=\"margin-bottom:16px;\">\n";
+    page += "            <label style=\"display:inline-block; width:270px; font-size:24px;\">Date:</label>\n";
+    page += "            <input name=\"date\" type=\"text\" style=\"width:350px; height:32px; border:none; border-radius:18px; background:#f4f4f4;\" />\n";
+    page += "          </div>\n";
+
+    page += "          <div style=\"margin-bottom:16px;\">\n";
+    page += "            <label style=\"display:inline-block; width:270px; font-size:24px;\">Time:</label>\n";
+    page += "            <input name=\"time\" type=\"text\" style=\"width:350px; height:32px; border:none; border-radius:18px; background:#f4f4f4;\" />\n";
+    page += "          </div>\n";
+
+    page += "          <div style=\"margin-bottom:16px;\">\n";
+    page += "            <label style=\"display:inline-block; width:270px; font-size:24px;\">Contactee:</label>\n";
+    page += "            <input name=\"contactee\" type=\"text\" style=\"width:350px; height:32px; border:none; border-radius:18px; background:#f4f4f4;\" />\n";
+    page += "          </div>\n";
+
+    page += "          <div style=\"margin-bottom:16px;\">\n";
+    page += "            <label style=\"display:inline-block; width:270px; font-size:24px;\">Location</label>\n";
+    page += "            <input name=\"location\" type=\"text\" style=\"width:350px; height:32px; border:none; border-radius:18px; background:#f4f4f4;\" />\n";
+    page += "          </div>\n";
+
+    page += "          <div style=\"margin-bottom:16px;\">\n";
+    page += "            <label style=\"display:inline-block; width:270px; font-size:24px;\">Description</label>\n";
+    page += "            <input name=\"description\" type=\"text\" style=\"width:350px; height:32px; border:none; border-radius:18px; background:#f4f4f4;\" />\n";
+    page += "          </div>\n";
+
+    page += "          <div style=\"margin-bottom:16px;\">\n";
+    page += "            <label style=\"display:inline-block; width:270px; font-size:24px;\">Image Path</label>\n";
+    page += "            <input name=\"imagePath\" type=\"text\" style=\"width:350px; height:32px; border:none; border-radius:18px; background:#f4f4f4;\" />\n";
+    page += "          </div>\n";
+
     page += "        </div>\n";
 
-    page += "        <div style=\"margin-bottom:16px;\">\n";
-    page += "          <label style=\"display:inline-block; width:270px; font-size:24px;\">Time:</label>\n";
-    page += "          <input type=\"text\" style=\"width:350px; height:32px; border:none; border-radius:18px; background:#f4f4f4;\" />\n";
+    page += "        <div style=\"position:absolute; top:18px; right:40px;\">\n";
+    page += "          <button type=\"submit\" style=\"background:#ff3b3b; border:none; border-radius:18px; padding:8px 24px; font-size:20px; margin-left:14px;\">Add</button>\n";
     page += "        </div>\n";
 
-    page += "        <div style=\"margin-bottom:16px;\">\n";
-    page += "          <label style=\"display:inline-block; width:270px; font-size:24px;\">Contactee:</label>\n";
-    page += "          <input type=\"text\" style=\"width:350px; height:32px; border:none; border-radius:18px; background:#f4f4f4;\" />\n";
-    page += "        </div>\n";
-
-    page += "        <div style=\"margin-bottom:16px;\">\n";
-    page += "          <label style=\"display:inline-block; width:270px; font-size:24px;\">Location</label>\n";
-    page += "          <input type=\"text\" style=\"width:350px; height:32px; border:none; border-radius:18px; background:#f4f4f4;\" />\n";
-    page += "        </div>\n";
-
-    page += "        <div style=\"margin-bottom:16px;\">\n";
-    page += "          <label style=\"display:inline-block; width:270px; font-size:24px;\">Description</label>\n";
-    page += "          <input type=\"text\" style=\"width:350px; height:32px; border:none; border-radius:18px; background:#f4f4f4;\" />\n";
-    page += "        </div>\n";
-
-    page += "        <div style=\"margin-bottom:16px;\">\n";
-    page += "          <label style=\"display:inline-block; width:270px; font-size:24px;\">Image Path</label>\n";
-    page += "          <input type=\"text\" style=\"width:350px; height:32px; border:none; border-radius:18px; background:#f4f4f4;\" />\n";
-    page += "        </div>\n";
-
-    page += "      </div>\n";
-
-    page += "      <div style=\"position:absolute; top:18px; right:40px;\">\n";
-    page += "        <button style=\"background:#ff3b3b; border:none; border-radius:18px; padding:8px 24px; font-size:20px; margin-left:14px;\">Add</button>\n";
-    page += "        <button style=\"background:#ff3b3b; border:none; border-radius:18px; padding:8px 24px; font-size:20px; margin-left:14px;\">Search</button>\n";
-    page += "        <button style=\"background:#ff3b3b; border:none; border-radius:18px; padding:8px 24px; font-size:20px; margin-left:14px;\">Remove</button>\n";
-    page += "      </div>\n";
-
+    page += "      </form>\n";
     page += "    </div>\n";
 
+    // Search form
+    page += "    <div style=\"background:#cfcfcf; margin-top:20px; padding:20px 25px; box-sizing:border-box;\">\n";
+    page += "      <form action=\"/searchAppointments\" method=\"GET\">\n";
+    page += "        <label style=\"display:inline-block; width:160px; font-size:24px;\">Search:</label>\n";
+    page += "        <input name=\"keyword\" type=\"text\" placeholder=\"Search appointments...\" ";
+    page += "style=\"width:350px; height:32px; border:none; border-radius:18px; background:#f4f4f4; padding-left:10px;\" />\n";
+    page += "        <button type=\"submit\" style=\"background:#ff3b3b; border:none; border-radius:18px; padding:8px 24px; font-size:20px; margin-left:14px;\">Search</button>\n";
+    page += "      </form>\n";
+    page += "    </div>\n";
+
+    // Table
     page += "    <div style=\"background:#cfcfcf; margin-top:45px; padding:20px 25px 40px 25px; min-height:500px;\">\n";
 
     page += "      <table style=\"width:100%; border-collapse:collapse; font-size:22px;\">\n";
@@ -103,17 +156,12 @@ std::string Page::generateGeneric()
     page += "            <th style=\"text-align:left; padding-bottom:20px;\">Location</th>\n";
     page += "            <th style=\"text-align:left; padding-bottom:20px;\">Description</th>\n";
     page += "            <th style=\"text-align:left; padding-bottom:20px;\">Image</th>\n";
+    page += "            <th style=\"text-align:left; padding-bottom:20px;\">Delete</th>\n";
     page += "          </tr>\n";
     page += "        </thead>\n";
 
     page += "        <tbody>\n";
-    page += "          <tr>\n";
-    page += "            <td>&nbsp;</td>\n";
-    page += "            <td></td>\n";
-    page += "            <td></td>\n";
-    page += "            <td></td>\n";
-    page += "            <td></td>\n";
-    page += "          </tr>\n";
+    page += rows;
     page += "        </tbody>\n";
 
     page += "      </table>\n";
@@ -124,6 +172,7 @@ std::string Page::generateGeneric()
 
     page += "</body>\n";
     page += "</html>\n";
+
     return page;
 }
 
@@ -158,8 +207,78 @@ std::string Page::getHTML()
     return html;
 }
 
-bool Page::updateAppointments()
+bool compareDates(const std::string &a, const std::string &b)
 {
-    
-    return true;
+    int d1, m1, y1;
+    int d2, m2, y2;
+
+    sscanf(a.c_str(), "%d/%d/%d", &d1, &m1, &y1);
+    sscanf(b.c_str(), "%d/%d/%d", &d2, &m2, &y2);
+
+    if (y1 != y2)
+        return y1 < y2;
+    if (m1 != m2)
+        return m1 < m2;
+    return d1 < d2;
+}
+
+void Page::updateDays(std::vector<Appointment *> appointments)
+{
+    days.clear();
+
+    if (appointments.empty())
+    {
+        return;
+    }
+
+    std::vector<std::string> dates;
+
+    for (auto app : appointments)
+    {
+        if (app == nullptr)
+        {
+            continue;
+        }
+
+        bool exists = false;
+        for (std::string s : dates)
+        {
+            if (s == app->getDate())
+            {
+                exists = true;
+                break;
+            }
+        }
+
+        if (!exists)
+        {
+            dates.push_back(app->getDate());
+        }
+    }
+
+    // at this point, dates contains the unique dates of the appointments.
+    std::sort(dates.begin(), dates.end(), compareDates);
+
+    for (const std::string &date : dates)
+    {
+        day *temp = new day(date);
+        for (Appointment *app : appointments)
+        {
+            if (app == nullptr)
+            {
+                continue;
+            }
+
+            if (app->getDate() == date)
+            {
+                temp->addAppointment(*app);
+            }
+        }
+        days.push_back(temp);
+    }
+}
+
+void Page::updateDays(std::vector<day *> newDays)
+{
+    this->days = newDays;
 }
