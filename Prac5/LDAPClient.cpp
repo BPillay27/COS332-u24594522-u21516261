@@ -1,6 +1,6 @@
 #include "LDAPClient.h"
 
-LDAPClient::LDAPClient(const std::string& host, int port)
+LDAPClient::LDAPClient(const std::string &host, int port)
     : host(host), port(port), sockfd(-1), nextMessageId(1)
 {
     std::memset(&serverAddr, 0, sizeof(serverAddr));
@@ -30,7 +30,7 @@ bool LDAPClient::connectToServer()
         return false;
     }
 
-    if (connect(sockfd, (struct sockaddr*)&serverAddr, sizeof(serverAddr)) < 0)
+    if (connect(sockfd, (struct sockaddr *)&serverAddr, sizeof(serverAddr)) < 0)
     {
         std::cerr << "Connect failed: " << std::strerror(errno) << std::endl;
         close(sockfd);
@@ -50,14 +50,14 @@ void LDAPClient::closeConnection()
     }
 }
 
-bool LDAPClient::sendAll(const std::vector<unsigned char>& data)
+bool LDAPClient::sendAll(const std::vector<unsigned char> &data)
 {
     size_t totalSent = 0;
 
     while (totalSent < data.size())
     {
         ssize_t sent = send(sockfd,
-                            reinterpret_cast<const char*>(&data[totalSent]),
+                            reinterpret_cast<const char *>(&data[totalSent]),
                             data.size() - totalSent,
                             0);
 
@@ -78,7 +78,7 @@ std::vector<unsigned char> LDAPClient::receivePacket()
     std::vector<unsigned char> packet;
     unsigned char buffer[4096];
 
-    ssize_t bytesRead = recv(sockfd, reinterpret_cast<char*>(buffer), sizeof(buffer), 0);
+    ssize_t bytesRead = recv(sockfd, reinterpret_cast<char *>(buffer), sizeof(buffer), 0);
     if (bytesRead <= 0)
     {
         return packet;
@@ -88,7 +88,7 @@ std::vector<unsigned char> LDAPClient::receivePacket()
     return packet;
 }
 
-void LDAPClient::appendLength(std::vector<unsigned char>& out, unsigned int len)
+void LDAPClient::appendLength(std::vector<unsigned char> &out, unsigned int len)
 {
     if (len < 128)
     {
@@ -107,21 +107,21 @@ void LDAPClient::appendLength(std::vector<unsigned char>& out, unsigned int len)
     }
 }
 
-void LDAPClient::appendInteger(std::vector<unsigned char>& out, int value)
+void LDAPClient::appendInteger(std::vector<unsigned char> &out, int value)
 {
     out.push_back(0x02); // INTEGER
     out.push_back(0x01); // length
     out.push_back(static_cast<unsigned char>(value));
 }
 
-void LDAPClient::appendOctetString(std::vector<unsigned char>& out, const std::string& value)
+void LDAPClient::appendOctetString(std::vector<unsigned char> &out, const std::string &value)
 {
     out.push_back(0x04); // OCTET STRING
     appendLength(out, static_cast<unsigned int>(value.size()));
     out.insert(out.end(), value.begin(), value.end());
 }
 
-void LDAPClient::appendSequence(std::vector<unsigned char>& out, unsigned char tag, const std::vector<unsigned char>& content)
+void LDAPClient::appendSequence(std::vector<unsigned char> &out, unsigned char tag, const std::vector<unsigned char> &content)
 {
     out.push_back(tag);
     appendLength(out, static_cast<unsigned int>(content.size()));
@@ -153,7 +153,7 @@ std::vector<unsigned char> LDAPClient::buildAnonymousBindRequest()
     return finalMessage;
 }
 
-std::vector<unsigned char> LDAPClient::buildSearchRequest(const std::string& planeName)
+std::vector<unsigned char> LDAPClient::buildSearchRequest(const std::string &planeName)
 {
     const std::string baseDN = "ou=Planes,dc=assets,dc=local";
     const std::string attributeName = "description";
@@ -205,7 +205,7 @@ std::vector<unsigned char> LDAPClient::buildSearchRequest(const std::string& pla
     return finalMessage;
 }
 
-int LDAPClient::findSubsequence(const std::vector<unsigned char>& data, const std::string& text, int start) const
+int LDAPClient::findSubsequence(const std::vector<unsigned char> &data, const std::string &text, int start) const
 {
     if (text.empty() || data.empty())
     {
@@ -233,7 +233,7 @@ int LDAPClient::findSubsequence(const std::vector<unsigned char>& data, const st
     return -1;
 }
 
-std::string LDAPClient::parseSearchResultForDescription(const std::vector<unsigned char>& packet)
+std::string LDAPClient::parseSearchResultForDescription(const std::vector<unsigned char> &packet)
 {
     // Minimal parser for this assignment:
     // Find the bytes for "description", then find the next OCTET STRING after it,
@@ -303,7 +303,7 @@ bool LDAPClient::anonymousBind()
     return true;
 }
 
-std::string LDAPClient::searchPlaneSpeed(const std::string& planeName)
+std::string LDAPClient::searchPlaneSpeed(const std::string &planeName)
 {
     std::vector<unsigned char> request = buildSearchRequest(planeName);
 
@@ -341,4 +341,175 @@ std::string LDAPClient::searchPlaneSpeed(const std::string& planeName)
     }
 
     return parseSearchResultForDescription(combinedResponse);
+}
+
+bool LDAPClient::responseIndicatesSuccess(const std::vector<unsigned char> &response)
+{
+    // Very small success check:
+    // LDAP resultCode success is usually encoded as:
+    // 0x0A 0x01 0x00
+    for (size_t i = 0; i + 2 < response.size(); ++i)
+    {
+        if (response[i] == 0x0A &&
+            response[i + 1] == 0x01 &&
+            response[i + 2] == 0x00)
+        {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+bool LDAPClient::simpleBind(const std::string &dn, const std::string &password)
+{
+    std::vector<unsigned char> bindContent;
+    std::vector<unsigned char> ldapMessage;
+    std::vector<unsigned char> finalMessage;
+
+    // version = 3
+    appendInteger(bindContent, 3);
+
+    // bind DN
+    appendOctetString(bindContent, dn);
+
+    // simple authentication choice [0]
+    bindContent.push_back(0x80);
+    appendLength(bindContent, static_cast<unsigned int>(password.size()));
+    bindContent.insert(bindContent.end(), password.begin(), password.end());
+
+    // LDAPMessage
+    appendInteger(ldapMessage, nextMessageId++);
+    appendSequence(ldapMessage, 0x60, bindContent); // BindRequest
+
+    appendSequence(finalMessage, 0x30, ldapMessage);
+
+    if (!sendAll(finalMessage))
+    {
+        return false;
+    }
+
+    std::vector<unsigned char> response = receivePacket();
+    if (response.empty())
+    {
+        std::cerr << "Bind response was empty." << std::endl;
+        return false;
+    }
+
+    return responseIndicatesSuccess(response);
+}
+
+bool LDAPClient::addPlane(const std::string &planeName, const std::string &speed)
+{
+    const std::string dn = "cn=" + planeName + ",ou=Planes,dc=assets,dc=local";
+
+    std::vector<unsigned char> addContent;
+    std::vector<unsigned char> attributeList;
+    std::vector<unsigned char> ldapMessage;
+    std::vector<unsigned char> finalMessage;
+
+    // entry DN
+    appendOctetString(addContent, dn);
+
+    // ---- attribute 1: objectClass = top, device ----
+    {
+        std::vector<unsigned char> partialAttribute;
+        std::vector<unsigned char> values;
+        std::vector<unsigned char> value1;
+        std::vector<unsigned char> value2;
+
+        appendOctetString(partialAttribute, "objectClass");
+
+        appendOctetString(value1, "top");
+        appendOctetString(value2, "device");
+
+        appendSequence(values, 0x31, value1); // SET with first value
+
+        // Need both values inside same SET, so rebuild properly:
+        values.clear();
+        std::vector<unsigned char> setContent;
+        appendOctetString(setContent, "top");
+        appendOctetString(setContent, "device");
+        appendSequence(partialAttribute, 0x31, setContent);
+
+        appendSequence(attributeList, 0x30, partialAttribute);
+    }
+
+    // ---- attribute 2: cn = planeName ----
+    {
+        std::vector<unsigned char> partialAttribute;
+        std::vector<unsigned char> setContent;
+
+        appendOctetString(partialAttribute, "cn");
+        appendOctetString(setContent, planeName);
+        appendSequence(partialAttribute, 0x31, setContent);
+
+        appendSequence(attributeList, 0x30, partialAttribute);
+    }
+
+    // ---- attribute 3: description = speed ----
+    {
+        std::vector<unsigned char> partialAttribute;
+        std::vector<unsigned char> setContent;
+
+        appendOctetString(partialAttribute, "description");
+        appendOctetString(setContent, speed);
+        appendSequence(partialAttribute, 0x31, setContent);
+
+        appendSequence(attributeList, 0x30, partialAttribute);
+    }
+
+    // attributes list
+    appendSequence(addContent, 0x30, attributeList);
+
+    // LDAPMessage
+    appendInteger(ldapMessage, nextMessageId++);
+    appendSequence(ldapMessage, 0x68, addContent); // AddRequest [APPLICATION 8]
+
+    appendSequence(finalMessage, 0x30, ldapMessage);
+
+    if (!sendAll(finalMessage))
+    {
+        return false;
+    }
+
+    std::vector<unsigned char> response = receivePacket();
+    if (response.empty())
+    {
+        std::cerr << "Add response was empty." << std::endl;
+        return false;
+    }
+
+    return responseIndicatesSuccess(response);
+}
+
+bool LDAPClient::deletePlane(const std::string &planeName)
+{
+    const std::string dn = "cn=" + planeName + ",ou=Planes,dc=assets,dc=local";
+
+    std::vector<unsigned char> ldapMessage;
+    std::vector<unsigned char> finalMessage;
+
+    appendInteger(ldapMessage, nextMessageId++);
+
+    // DelRequest is [APPLICATION 10], primitive tag 0x4A
+    ldapMessage.push_back(0x4A);
+    appendLength(ldapMessage, static_cast<unsigned int>(dn.size()));
+    ldapMessage.insert(ldapMessage.end(), dn.begin(), dn.end());
+
+    appendSequence(finalMessage, 0x30, ldapMessage);
+
+    if (!sendAll(finalMessage))
+    {
+        return false;
+    }
+
+    std::vector<unsigned char> response = receivePacket();
+    if (response.empty())
+    {
+        std::cerr << "Delete response was empty." << std::endl;
+        return false;
+    }
+
+    return responseIndicatesSuccess(response);
 }

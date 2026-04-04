@@ -12,7 +12,8 @@ int main()
         return 1;
     }
 
-    if (!client.anonymousBind())
+    // Use admin bind so add/delete work
+    if (!client.simpleBind("cn=admin,dc=assets,dc=local", "2704"))
     {
         std::cerr << "Bind failed.\n";
         return 1;
@@ -20,26 +21,62 @@ int main()
 
     while (true)
     {
-        std::string planeName;
+        std::cout << "\n==== LDAP Client ====\n";
+        std::cout << "1. Search plane\n";
+        std::cout << "2. Add plane\n";
+        std::cout << "3. Delete plane\n";
+        std::cout << "4. Exit\n";
+        std::cout << "Choice: ";
 
-        std::cout << "\nEnter plane name (or 'exit'): ";
-        std::getline(std::cin, planeName);
+        std::string choice;
+        std::getline(std::cin, choice);
 
-        if (planeName == "exit")
-            break;
-
-        if (planeName.empty())
-            continue;
-
-        std::string speed = client.searchPlaneSpeed(planeName);
-
-        if (speed.empty())
+        if (choice == "1")
         {
-            std::cout << "Plane not found or speed missing\n";
+            std::string name;
+            std::cout << "Enter plane name: ";
+            std::getline(std::cin, name);
+
+            std::string speed = client.searchPlaneSpeed(name);
+
+            if (speed.empty())
+                std::cout << "Plane not found.\n";
+            else
+                std::cout << "Maximum speed: " << speed << " km/h\n";
+        }
+        else if (choice == "2")
+        {
+            std::string name, speed;
+
+            std::cout << "Enter plane name: ";
+            std::getline(std::cin, name);
+
+            std::cout << "Enter max speed: ";
+            std::getline(std::cin, speed);
+
+            if (client.addPlane(name, speed))
+                std::cout << "Plane added.\n";
+            else
+                std::cout << "Add failed.\n";
+        }
+        else if (choice == "3")
+        {
+            std::string name;
+            std::cout << "Enter plane name to delete: ";
+            std::getline(std::cin, name);
+
+            if (client.deletePlane(name))
+                std::cout << "Plane deleted.\n";
+            else
+                std::cout << "Delete failed.\n";
+        }
+        else if (choice == "4")
+        {
+            break;
         }
         else
         {
-            std::cout << "Maximum speed: " << speed << " km/h\n";
+            std::cout << "Invalid option.\n";
         }
     }
 
