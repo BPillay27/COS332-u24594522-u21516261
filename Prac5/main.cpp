@@ -1,6 +1,6 @@
 #include "LDAPClient.h"
 #include <iostream>
-#include <string>
+#include <vector>
 
 int main()
 {
@@ -8,77 +8,110 @@ int main()
 
     if (!client.connectToServer())
     {
-        std::cerr << "Could not connect to LDAP server.\n";
+        std::cerr << "Failed to connect to server." << std::endl;
         return 1;
     }
 
-    // Use admin bind so add/delete work
     if (!client.simpleBind("cn=admin,dc=assets,dc=local", "2704"))
     {
-        std::cerr << "Bind failed.\n";
+        std::cerr << "Anonymous bind failed." << std::endl;
+        client.closeConnection();
         return 1;
     }
 
-    while (true)
+    int choice = 0;
+
+    do
     {
-        std::cout << "\n==== LDAP Client ====\n";
-        std::cout << "1. Search plane\n";
-        std::cout << "2. Add plane\n";
-        std::cout << "3. Delete plane\n";
-        std::cout << "4. Exit\n";
-        std::cout << "Choice: ";
+        std::cout << "\n=== LDAP Plane Client ===" << std::endl;
+        std::cout << "1. Search plane" << std::endl;
+        std::cout << "2. Add plane" << std::endl;
+        std::cout << "3. Delete plane" << std::endl;
+        std::cout << "4. Get all planes" << std::endl;
+        std::cout << "5. Exit" << std::endl;
+        std::cout << "Enter choice: ";
+        std::cin >> choice;
 
-        std::string choice;
-        std::getline(std::cin, choice);
-
-        if (choice == "1")
+        if (choice == 1)
         {
-            std::string name;
+            std::string planeName;
             std::cout << "Enter plane name: ";
-            std::getline(std::cin, name);
+            std::cin >> planeName;
 
-            std::string speed = client.searchPlaneSpeed(name);
+            std::string speed = client.searchPlaneSpeed(planeName);
 
-            if (speed.empty())
-                std::cout << "Plane not found.\n";
+            if (!speed.empty())
+            {
+                std::cout << "Plane: " << planeName << ", Speed: " << speed << std::endl;
+            }
             else
-                std::cout << "Maximum speed: " << speed << " km/h\n";
+            {
+                std::cout << "Plane not found." << std::endl;
+            }
         }
-        else if (choice == "2")
+        else if (choice == 2)
         {
-            std::string name, speed;
+            std::string planeName;
+            std::string speed;
 
             std::cout << "Enter plane name: ";
-            std::getline(std::cin, name);
+            std::cin >> planeName;
 
-            std::cout << "Enter max speed: ";
-            std::getline(std::cin, speed);
+            std::cout << "Enter speed: ";
+            std::cin >> speed;
 
-            if (client.addPlane(name, speed))
-                std::cout << "Plane added.\n";
+            if (client.addPlane(planeName, speed))
+            {
+                std::cout << "Plane added successfully." << std::endl;
+            }
             else
-                std::cout << "Add failed.\n";
+            {
+                std::cout << "Failed to add plane." << std::endl;
+            }
         }
-        else if (choice == "3")
+        else if (choice == 3)
         {
-            std::string name;
-            std::cout << "Enter plane name to delete: ";
-            std::getline(std::cin, name);
+            std::string planeName;
+            std::cout << "Enter plane name: ";
+            std::cin >> planeName;
 
-            if (client.deletePlane(name))
-                std::cout << "Plane deleted.\n";
+            if (client.deletePlane(planeName))
+            {
+                std::cout << "Plane deleted successfully." << std::endl;
+            }
             else
-                std::cout << "Delete failed.\n";
+            {
+                std::cout << "Failed to delete plane." << std::endl;
+            }
         }
-        else if (choice == "4")
+        else if (choice == 4)
         {
-            break;
+            std::vector<PlaneInfo> planes = client.getAllPlanes();
+
+            if (planes.empty())
+            {
+                std::cout << "No planes found." << std::endl;
+            }
+            else
+            {
+                std::cout << "\nAll planes:" << std::endl;
+                for (size_t i = 0; i < planes.size(); ++i)
+                {
+                    std::cout << "Name: " << planes[i].name
+                              << ", Speed: " << planes[i].speed << std::endl;
+                }
+            }
+        }
+        else if (choice == 5)
+        {
+            std::cout << "Exiting..." << std::endl;
         }
         else
         {
-            std::cout << "Invalid option.\n";
+            std::cout << "Invalid choice." << std::endl;
         }
-    }
+
+    } while (choice != 5);
 
     client.closeConnection();
     return 0;
