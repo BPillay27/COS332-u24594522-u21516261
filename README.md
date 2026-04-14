@@ -19,7 +19,8 @@ A C++ client with a LDAP server that acts like a database that is holding assets
 An event reminder, that sends an email to the localhost (linux), you need the port 25 open and it uses SMNTP and ours works off postfix and only runs locally wit hno internet connection. 
 To run the project:
 make run
-and fill in the .env
+and fill in the .env with the namae of your system if you don't know what it is use
+whoami on linux
 Also postfix must be running you can use this command to start it 
 sudo service postfix start
 and to stop it
