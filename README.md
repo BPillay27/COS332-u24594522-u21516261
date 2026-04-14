@@ -16,4 +16,11 @@ A c++11 implementation of the Database-Server-Client architechture. The database
 A C++ client with a LDAP server that acts like a database that is holding assets. The assets in this one is planes.
 
 ## Prac 6
-An event reminder, that sends a mail to the localhost (linux), technically sms and e-mail are both mail so they fall under this large category. 
+An event reminder, that sends an email to the localhost (linux), you need the port 25 open and it uses SMNTP and ours works off postfix and only runs locally wit hno internet connection. 
+To run the project:
+make run
+and fill in the .env
+Also postfix must be running you can use this command to start it 
+sudo service postfix start
+and to stop it
+sudo service postfix stop
