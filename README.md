@@ -11,3 +11,9 @@ A c++11 World clock server, that dishes out html files and receives commands usi
 
 ## Prac 4
 A c++11 implementation of the Database-Server-Client architechture. The database from Prac2 (which now supports images) is queried by a server upon HTTP request from the client. The server then updates the clients page after adding, deleting or searching for appointments.
+
+## Prac 5
+A C++ client with a LDAP server that acts like a database that is holding assets. The assets in this one is planes.
+
+## Prac 6
+An event reminder, that sends a mail to the localhost (linux), technically sms and e-mail are both mail so they fall under this large category. 
