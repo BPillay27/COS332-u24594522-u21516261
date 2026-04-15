@@ -23,8 +23,8 @@ clean:
 run: $(TARGET)
 	./$(TARGET)
 
-zip:
-	zip u24594522_u21516261.zip program *.cpp *.h
+zip: $(TARGET)
+	zip u24594522_u21516261.zip $(TARGET) *.cpp *.h
 
 rz:
 	rm -f u24594522_u21516261.zip
