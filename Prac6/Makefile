@@ -24,7 +24,7 @@ run: $(TARGET)
 	./$(TARGET)
 
 zip: $(TARGET)
-	zip u24594522_u21516261.zip $(TARGET) *.cpp *.h
+	zip u24594522_u21516261.zip $(TARGET) .env *.cpp *.h
 
 rz:
 	rm -f u24594522_u21516261.zip
