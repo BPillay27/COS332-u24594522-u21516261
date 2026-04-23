@@ -80,6 +80,23 @@ public:
 class servicePOP3
 {
 private:
+    bool deleteMessage(int sock, int msgNum)
+    {
+        string cmd = "DELE " + to_string(msgNum) + "\r\n";
+        send(sock, cmd.c_str(), cmd.length(), 0);
+
+        string response = recvLine(sock);
+        return response.find("+OK") == 0;
+    }
+
+    bool resetDeletions(int sock)
+    {
+        send(sock, "RSET\r\n", 6, 0);
+
+        string response = recvLine(sock);
+        return response.find("+OK") == 0;
+    }
+
     string getHeader(const string &data, string key)
     {
         size_t pos = data.find(key + ": ");
@@ -265,6 +282,81 @@ public:
         send(sock, "QUIT\r\n", 6, 0);
         close(sock);
     }
+
+    void demoDeleteAndReset(const string &user, const string &pass)
+    {
+        int sock = socket(AF_INET, SOCK_STREAM, 0);
+        struct sockaddr_in addr;
+        addr.sin_family = AF_INET;
+        addr.sin_port = htons(110);
+        inet_pton(AF_INET, "127.0.0.1", &addr.sin_addr);
+
+        if (connect(sock, (struct sockaddr *)&addr, sizeof(addr)) < 0)
+        {
+            perror("POP3 connect failed");
+            return;
+        }
+
+        string response = recvLine(sock); // greeting
+
+        send(sock, ("USER " + user + "\r\n").c_str(), user.length() + 7, 0);
+        response = recvLine(sock);
+        if (response.find("+OK") != 0)
+        {
+            cout << "USER failed: " << response;
+            close(sock);
+            return;
+        }
+
+        send(sock, ("PASS " + pass + "\r\n").c_str(), pass.length() + 7, 0);
+        response = recvLine(sock);
+        if (response.find("+OK") != 0)
+        {
+            cout << "PASS failed: " << response;
+            close(sock);
+            return;
+        }
+
+        send(sock, "STAT\r\n", 6, 0);
+        response = recvLine(sock);
+
+        int count = 0;
+        sscanf(response.c_str(), "+OK %d", &count);
+
+        if (count <= 0)
+        {
+            cout << "No messages available to mark for deletion." << endl;
+            send(sock, "QUIT\r\n", 6, 0);
+            close(sock);
+            return;
+        }
+
+        cout << "Most recent message is: " << count << endl;
+
+        if (deleteMessage(sock, count))
+        {
+            cout << "Message " << count << " marked for deletion." << endl;
+        }
+        else
+        {
+            cout << "Failed to mark message " << count << " for deletion." << endl;
+            send(sock, "QUIT\r\n", 6, 0);
+            close(sock);
+            return;
+        }
+
+        if (resetDeletions(sock))
+        {
+            cout << "Deletion marks cleared with RSET." << endl;
+        }
+        else
+        {
+            cout << "RSET failed." << endl;
+        }
+
+        send(sock, "QUIT\r\n", 6, 0);
+        close(sock);
+    }
 };
 
 // --- Utilities ---
@@ -350,6 +442,7 @@ int main()
         try
         {
             cout << "[" << time(0) << "] Checking for new 'prac7' messages..." << endl;
+            receiver.demoDeleteAndReset(user, pass);
             receiver.runVacationResponder(user, pass, mailer, vacationStart, handledUIDLs, uidlFile);
         }
         catch (const exception &e)
