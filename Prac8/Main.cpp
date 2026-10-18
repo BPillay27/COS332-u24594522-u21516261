@@ -1,71 +1,94 @@
 #include "Client.h"
+#include "FTP_Client.h"
+
+#include <iostream>
+#include <fstream>
 #include <string>
+#include <map>
+#include <exception>
 #include <thread>
 #include <chrono>
-#include <iostream>
-#include <atomic>
+
+std::map<std::string, std::string> loadEnv(const std::string& filename)
+{
+    std::map<std::string, std::string> env;
+    std::ifstream file(filename);
+
+    if (!file.is_open())
+    {
+        throw std::runtime_error("Could not open .env file.");
+    }
+
+    std::string line;
+
+    while (std::getline(file, line))
+    {
+        if (line.empty() || line[0] == '#')
+        {
+            continue;
+        }
+
+        size_t equalPos = line.find('=');
+
+        if (equalPos == std::string::npos)
+        {
+            continue;
+        }
+
+        std::string key = line.substr(0, equalPos);
+        std::string value = line.substr(equalPos + 1);
+
+        env[key] = value;
+    }
+
+    return env;
+}
 
 int main()
 {
-    BackupClient client("watch", "backup");
-
-    std::atomic<bool> running(false);
-    std::atomic<bool> exitProgram(false);
-
-    std::thread worker([&client, &running, &exitProgram]()
+    try
     {
-        while (!exitProgram)
+        std::map<std::string, std::string> env = loadEnv(".env");
+
+        std::string watchDir = env["WATCH_DIR"];
+        std::string host = env["FTP_HOST"];
+        int port = std::stoi(env["FTP_PORT"]);
+        std::string username = env["FTP_USER"];
+        std::string password = env["FTP_PASS"];
+        std::string remoteDir = env["FTP_REMOTE_DIR"];
+        int pollInterval = std::stoi(env["POLL_INTERVAL"]);
+
+        FTPClient ftpClient(host, port);
+
+        ftpClient.connectToServer();
+        ftpClient.login(username, password);
+        ftpClient.changeDirectory(remoteDir);
+
+        ftpClient.deleteRemoteFile("test.txt");
+
+        BackupClient backupClient(watchDir);
+
+        std::cout << "Monitoring directory: " << watchDir << std::endl;
+
+        backupClient.backupFiles(ftpClient); // initial upload of existing .txt files
+
+        while (true)
         {
-            if (running)
+            if (backupClient.checkForChanges())
             {
-                if (client.checkForChanges())
-                {
-                    client.backupFiles();
-                }
+                std::cout << "Changes detected." << std::endl;
+                backupClient.backupFiles(ftpClient);
             }
 
-            std::this_thread::sleep_for(std::chrono::seconds(1));
+            std::this_thread::sleep_for(std::chrono::seconds(pollInterval));
         }
-    });
-
-    std::string command;
-
-    std::cout << "Enter START to begin monitoring or QUIT to exit." << std::endl;
-
-    while (true)
-    {
-        std::getline(std::cin, command);
-
-        if (command == "START")
-        {
-            if (!running)
-            {
-                client.backupFiles(); // initial backup when monitoring starts
-                running = true;
-                std::cout << "Monitoring started." << std::endl;
-            }
-            else
-            {
-                std::cout << "Monitoring is already running." << std::endl;
-            }
-        }
-        else if (command == "QUIT")
-        {
-            exitProgram = true;
-            break;
-        }
-        else
-        {
-            std::cout << "Unknown command. Use START or QUIT." << std::endl;
-        }
+        ftpClient.disconnect();
     }
-
-    if (worker.joinable())
+    catch (const std::exception& e)
     {
-        worker.join();
+        std::cerr << "Error: " << e.what() << std::endl;
+        return 1;
     }
-
-    std::cout << "Program stopped." << std::endl;
 
     return 0;
 }

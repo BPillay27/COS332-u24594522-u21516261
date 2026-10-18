@@ -1,20 +1,13 @@
 #include "Client.h"
 
-BackupClient::BackupClient(const std::filesystem::path& directory,
-               const std::filesystem::path& backupDirectory)
+BackupClient::BackupClient(const std::filesystem::path &directory)
 {
     if (!std::filesystem::exists(directory) || !std::filesystem::is_directory(directory))
     {
         throw std::invalid_argument("Watch directory does not exist or is not a directory.");
     }
 
-    if (!std::filesystem::exists(backupDirectory) || !std::filesystem::is_directory(backupDirectory))
-    {
-        throw std::invalid_argument("Backup directory does not exist or is not a directory.");
-    }
-
     this->directory = directory;
-    this->backupDirectory = backupDirectory;
 }
 
 BackupClient::~BackupClient()
@@ -26,7 +19,7 @@ void BackupClient::updateFileMap()
 {
     fileMap.clear();
 
-    for (const auto& entry : std::filesystem::directory_iterator(directory))
+    for (const auto &entry : std::filesystem::directory_iterator(directory))
     {
         if (entry.is_regular_file() && entry.path().extension() == ".txt")
         {
@@ -49,7 +42,7 @@ bool BackupClient::checkForChanges()
 {
     std::map<std::filesystem::path, std::filesystem::file_time_type> currentMap;
 
-    for (const auto& entry : std::filesystem::directory_iterator(directory))
+    for (const auto &entry : std::filesystem::directory_iterator(directory))
     {
         if (entry.is_regular_file() && entry.path().extension() == ".txt")
         {
@@ -78,13 +71,14 @@ bool BackupClient::checkForChanges()
     return false;
 }
 
-void BackupClient::backupFiles()
+void BackupClient::backupFiles(FTPClient &ftpClient)
 {
-    for (const auto& entry : std::filesystem::directory_iterator(directory))
+    for (const auto &entry : std::filesystem::directory_iterator(directory))
     {
         if (entry.is_regular_file() && entry.path().extension() == ".txt")
         {
             std::filesystem::path fileName = entry.path().filename();
+
             std::filesystem::file_time_type currentTime =
                 std::filesystem::last_write_time(entry.path());
 
@@ -93,16 +87,12 @@ void BackupClient::backupFiles()
 
             if (it == fileMap.end() || it->second != currentTime)
             {
-                std::filesystem::copy_file(
-                    entry.path(),
-                    backupDirectory / fileName,
-                    std::filesystem::copy_options::overwrite_existing
-                );
+                ftpClient.uploadFile(entry.path(), fileName.string());
+
+                fileMap[fileName] = currentTime;
 
                 std::cout << "Backed up: " << fileName << std::endl;
             }
         }
     }
-
-    updateFileMap();
 }

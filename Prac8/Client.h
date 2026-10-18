@@ -1,20 +1,28 @@
+#ifndef CLIENT_H
+#define CLIENT_H
+
 #include <map>
 #include <filesystem>
 #include <iostream>
 #include <stdexcept>
+
+#include "FTP_Client.h"
 
 class BackupClient
 {
 private:
     std::map<std::filesystem::path, std::filesystem::file_time_type> fileMap;
     std::filesystem::path directory;
-    std::filesystem::path backupDirectory;
 
 public:
-    BackupClient(const std::filesystem::path &directory, const std::filesystem::path &backupDirectory);
+    BackupClient(const std::filesystem::path &directory);
     ~BackupClient();
+
     void updateFileMap();
     void printFileMap() const;
     bool checkForChanges();
-    void backupFiles();
+
+    void backupFiles(FTPClient &ftpClient);
 };
+
+#endif
